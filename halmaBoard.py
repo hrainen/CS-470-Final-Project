@@ -8,6 +8,9 @@ class HalmaGUI:
 	def __init__(self, screen, dim):
 		self.board = []			#This is the list that will hold our halma board
 		self.screen = screen	#This is the window the GUI will go in
+		self.moveStarted = False
+		self.selectedPiece = None
+		self.movedPieces = [None, None]
 		self.statusText = StringVar()	#This is the status text at the top of the GUI
 		self.statusText.set("The game has begun")	#Initially set status to "The game has begun"
 		#Create status text, pass in self.statusText variable
@@ -52,14 +55,51 @@ class HalmaGUI:
 		event.widget.configure(relief = GROOVE)
 	
 	def updateLabel(self, event):	#Update label, reset after 1 second
-		self.statusText.set("A button has been clicked!")
-		self.screen.after(1000, self.resetLabel)
+		self.movedPieces = [None, None]		#Reset spaces involving movement
+		for piece in self.board:			#Iterate through board, and find space clicked
+			if piece[1] == event.widget and self.selectedPiece == None:	#If space found, and currently no selected pieces
+				if piece[0] != ' ':		#If space contains a piece, select that piece!
+					self.statusText.set("A gamepiece has been selected!")
+					self.selectedPiece = piece
+			#If space found, and it contains the currently selected piece, deselect it
+			elif piece[1] == event.widget and piece[1] == self.selectedPiece[1]:
+				self.selectedPiece = None
+				self.statusText.set("A gamepiece has been deselected")
+			#If space found, and a piece has already been selected
+			elif piece[1] == event.widget and self.selectedPiece != None:
+				if piece[0] != ' ':	#If space contains a piece, tell user that space is occupied
+					self.statusText.set("That space is currently occupied")
+				else:				#If space is empty, move selected piece to that location!
+					self.moveSelectedPiece(piece)
+		self.refreshBoard()			#Update board to show changes
+		self.screen.after(1000, self.resetLabel)	#Reset label at top
+	
+	def moveSelectedPiece(self, piece):	#Moves selectedPiece to the given piece location
+		piece[0] = self.selectedPiece[0]
+		self.selectedPiece[0] = ' '
+		self.movedPieces = [piece, self.selectedPiece]
+		self.selectedPiece = None	#Deselect space, as there are no pieces there anymore
+		self.statusText.set("A piece has been moved!")
 	
 	def resetLabel(self):	#Reset label
 		self.statusText.set("Back to business")
 
-	def refreshBoard(self):	#Right now just skeleton code, should update halma piece positions
-		pass
+	def refreshBoard(self):	#Updates halma piece positions, and visuals
+		for piece in self.board:	#Clear board
+			piece[1].delete("all")
+		
+		if self.selectedPiece != None:	#Mark selected pieces with green rectangle
+			self.selectedPiece[1].create_rectangle(0, 0, 36, 35, fill = "green", outline = "green")
+			
+		if self.movedPieces[0] != None and self.movedPieces[1] != None:	#Mark spaces involving movement with yellow rectangle
+			self.movedPieces[0][1].create_rectangle(0, 0, 36, 35, fill = "yellow", outline = "yellow")
+			self.movedPieces[1][1].create_rectangle(0, 0, 36, 35, fill = "yellow", outline = "yellow")
+		
+		for piece in self.board:	#Mark X with red circle and Y with blue circle
+			if piece[0] == 'X':
+				piece[1].create_oval(7, 7, 33, 33, fill = "red", outline = "red")
+			if piece[0] == 'O':
+				piece[1].create_oval(7, 7, 33, 33, fill = "blue", outline = "blue")
 		
 	def quit(self):	#Quit GUI
 		self.screen.destroy()
