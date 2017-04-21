@@ -5,7 +5,7 @@ from tkinter import *
 
 class HalmaGUI:
 
-	def __init__(self, screen, dim):
+	def __init__(self, screen, dim, inputFile):
 		self.board = []			#This is the list that will hold our halma board
 		self.screen = screen	#This is the window the GUI will go in
 		self.moveStarted = False
@@ -18,6 +18,16 @@ class HalmaGUI:
 		#Add status text to GUI using grid() layout, it should be centered along the top of the halma grid
 		self.status.grid(row = 0, columnspan = dim, pady = 5)
 		
+		if(inputFile == None):
+			self.createBoard(dim)
+		else:
+			self.loadFile(inputFile, dim)
+		
+		#Add quit button to bottom of GUI, centered along halma grid
+		tkinter.Button(screen, text = "QUIT", command = self.quit, relief = GROOVE)\
+			.grid(row = dim + 1, columnspan = dim, ipadx = 15, ipady = 3, pady = 5)
+
+	def createBoard(self, dim):
 		#For loop to create buttons that make up halma board (dim^2 total)
 		for i in range(dim):
 			for j in range(dim):
@@ -27,11 +37,23 @@ class HalmaGUI:
 					self.board.append(['O', self.createButton(i, j, "blue")])
 				else:							#Else, create blank button (or blank halma square)
 					self.board.append([' ', self.createButton(i, j, "")])
-		
-		#Add quit button to bottom of GUI, centered along halma grid
-		tkinter.Button(screen, text = "QUIT", command = self.quit, relief = GROOVE)\
-			.grid(row = dim + 1, columnspan = dim, ipadx = 15, ipady = 3, pady = 5)
-
+	
+	def loadFile(self, inputFile, dim):
+		j = 0
+		fileID = open(inputFile, 'r')
+		for i in range(dim):
+			row = fileID.readline().split( )
+			for letter in row:
+				if letter == 'X':
+					self.board.append(['X', self.createButton(i, j, "red")])
+				elif letter == 'O':
+					self.board.append(['O', self.createButton(i, j, "blue")])
+				elif letter == '_':
+					self.board.append([' ', self.createButton(i, j, "")])
+				j += 1
+			j = 0
+		fileID.close()
+	
 	def createButton(self, i, j, color):	#Create a custom button using Canvas()
 		#Create initial button appearance (does nothing when clicked)
 		tempButton = Canvas(self.screen, borderwidth = 2, relief = GROOVE, width = 10, height = 23)
@@ -95,7 +117,7 @@ class HalmaGUI:
 			self.movedPieces[0][1].create_rectangle(0, 0, 36, 35, fill = "yellow", outline = "yellow")
 			self.movedPieces[1][1].create_rectangle(0, 0, 36, 35, fill = "yellow", outline = "yellow")
 		
-		for piece in self.board:	#Mark X with red circle and Y with blue circle
+		for piece in self.board:	#Mark X with red circle and O with blue circle
 			if piece[0] == 'X':
 				piece[1].create_oval(7, 7, 33, 33, fill = "red", outline = "red")
 			if piece[0] == 'O':
@@ -106,5 +128,13 @@ class HalmaGUI:
 
 
 screen = tkinter.Tk(className = "Halma GUI")	#Create window for GUI
-theGUI = HalmaGUI(screen, int(sys.argv[1]))		#Create HalmaGUI object, pass in window and dimensions
-screen.mainloop()								#Run GUI
+if len(sys.argv) == 2:
+	theGUI = HalmaGUI(screen, int(sys.argv[1]), None)	#Create HalmaGUI object, pass in window and dimensions
+elif len(sys.argv) == 3:
+	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[2])	#Create HalmaGUI object, pass in window, dimensions, and input file
+else:
+	print ("""You must run the program with one of two commands:
+	1. python halmaBoard.py dimensions
+	2. python halmaBoard.py dimensions inputFile.txt""")
+	sys.exit()
+screen.mainloop()	#Run GUI
