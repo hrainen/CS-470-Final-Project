@@ -34,6 +34,9 @@ class HalmaGUI:
 		tkinter.Button(screen, text = "QUIT", command = self.quit, relief = GROOVE)\
 			.grid(row = 3, column = 0, ipadx = 15, ipady = 3, pady = 5)
 
+		tkinter.Button(screen, text="genMovesTest", command=self.genMovesRed, relief=GROOVE) \
+			.grid(row=4, column=0, ipadx=15, ipady=3, pady=5)
+
 	def createBoard(self):
 		#For loop to create buttons that make up halma board (dim^2 total)
 		for i in range(self.dim):
@@ -45,7 +48,60 @@ class HalmaGUI:
 				else:							#Else, create blank button (or blank halma square)
 					self.board.append([' ', self.createButton(i, j, "")])
 		self.createWinRegions()
-	
+
+	''' I think i know what to do for restricting movement for a player,
+		when we get the turn taking working, just find valid moves for
+		whos turn it is, more on this later '''
+
+
+	# @ params: No params for now
+	# returns a dictionary where the key is the piece we want to move,
+	# 					   and the value is a list of valid positions for that piece to move to
+	def genMovesRed(self):
+		self.allValMoves = {} 		# append dictionaries for pieces and their valid moves here
+
+		# loop through the board, if the piece being checked belongs to the player whos moves we're generating
+		for i in range(self.dim*self.dim):
+			if self.board[i][0] == "X": # generate valid moves for that piece
+				self.allValMoves.update(self.getValidMoves(i))
+		print(self.allValMoves)
+
+
+	# @ params: takes in position(list index) for the piece we want to find valid moves for
+	# returns a dictionary {key: value} where the key is the initial position passed in,
+	# 					   and the value is a list of valid positions for the initial coord to move to
+	def getValidMoves(self, pos):
+		self.X = pos % self.dim 			# converts indice to X-coord
+		self.Y = pos // self.dim			# converts indice to Y-coord
+		self.coord = (self.X, self.Y)		# 2-tuple for the coord (X,Y)
+		self.valMoves = []					# List to store all valid coordinates(X,Y) at
+
+		# the coordinates of adjacent squares
+		self.adjPos = [(-1,-1),(0,-1),(1,-1),
+					   (-1,0),        (1,0),
+					   (-1,1), (0,1), (1,1)]
+
+		# check to see if all adjacent moves are valid
+		for j in self.adjPos:
+			self.newX = self.X + j[0] # gets the actual adjacent X value
+			self.newY = self.Y + j[1] # gets the actual adjacent Y value
+			self.newCoord = (self.newX, self.newY)
+
+			self.newIndice = self.newCoord[0] + self.newCoord[1]*self.dim 		# indice on board
+
+
+			# checks if the adjacent X position is in bounds
+			if self.newX >= 0 and self.newX < self.dim:
+				# checks if the adjacent Y position is in bounds and if the position is blank (no piece is there)
+				if self.newY >= 0 and self.newY < self.dim and self.board[self.newIndice][0] == " ":
+					# add that position to the list of valid positions
+					self.valMoves.append(self.newCoord)
+
+			# if an adjacent position has a piece there, check to see if initial piece can jump over the adjacent piece
+			# call a get jump positions function ***here***
+
+		return {self.coord: self.valMoves} 	#returns valid positions for one piece to move to
+
 	def loadFromFile(self, inputFile):
 		j = 0
 		fileID = open(inputFile, 'r')
