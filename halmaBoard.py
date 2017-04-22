@@ -21,11 +21,14 @@ class HalmaGUI:
 		if(inputFile == None):
 			self.createBoard(dim)
 		else:
-			self.loadFile(inputFile, dim)
+			self.loadFromFile(inputFile, dim)
+		
+		tkinter.Button(screen, text = "SAVE BOARD", command = lambda: self.saveModal(dim), relief = GROOVE)\
+			.grid(row = dim + 1, columnspan = dim, ipadx = 15, ipady = 3, pady = 5)
 		
 		#Add quit button to bottom of GUI, centered along halma grid
 		tkinter.Button(screen, text = "QUIT", command = self.quit, relief = GROOVE)\
-			.grid(row = dim + 1, columnspan = dim, ipadx = 15, ipady = 3, pady = 5)
+			.grid(row = dim + 2, columnspan = dim, ipadx = 15, ipady = 3, pady = 5)
 
 	def createBoard(self, dim):
 		#For loop to create buttons that make up halma board (dim^2 total)
@@ -38,7 +41,7 @@ class HalmaGUI:
 				else:							#Else, create blank button (or blank halma square)
 					self.board.append([' ', self.createButton(i, j, "")])
 	
-	def loadFile(self, inputFile, dim):
+	def loadFromFile(self, inputFile, dim):
 		j = 0
 		fileID = open(inputFile, 'r')
 		for i in range(dim):
@@ -53,6 +56,49 @@ class HalmaGUI:
 				j += 1
 			j = 0
 		fileID.close()
+	
+	def saveToFile(self, inputModal, outputFile, dim):
+		i = 0
+		fileID = open(outputFile, 'w')
+		for position in self.board:
+			if position[0] == ' ':
+				fileID.write("_")
+			elif position[0] == 'X':
+				fileID.write("X")
+			elif position[0] == 'O':
+				fileID.write("O")
+			
+			if i + 1 == dim:
+				i = -1
+				fileID.write("\n")
+			else:
+				fileID.write(" ")
+			i += 1
+		fileID.close()
+		print("Saved board to: " + outputFile)
+		self.quitModal(inputModal)
+			
+	def saveModal(self, dim):
+		saveModal = Toplevel()
+		
+		label = Label(saveModal, text = "File to save: ", justify = LEFT, relief = RIDGE, width = 25)
+		label.grid(row = 0, column = 0, pady = 5)
+		
+		entry = Entry(saveModal, justify = LEFT, relief = RIDGE, width = 25)
+		entry.grid(row = 0, column = 1, pady = 5)
+		
+		tkinter.Button(saveModal, text = "SAVE", command = lambda: self.saveToFile(saveModal, entry.get(), dim), relief = GROOVE)\
+			.grid(row = 1, column = 0, ipadx = 15, ipady = 3, pady = 5)
+			
+		tkinter.Button(saveModal, text = "CANCEL", command = lambda: self.quitModal(saveModal), relief = GROOVE)\
+			.grid(row = 1, column = 1, ipadx = 15, ipady = 3, pady = 5)
+		
+		saveModal.transient(self.screen)
+		saveModal.grab_set()
+		self.screen.wait_window(saveModal)
+	
+	def quitModal(self, inputModal):
+		inputModal.destroy()
 	
 	def createButton(self, i, j, color):	#Create a custom button using Canvas()
 		#Create initial button appearance (does nothing when clicked)
