@@ -8,6 +8,7 @@ class HalmaGUI:
 	def __init__(self, screen, dim, inputFile):
 		self.board = []			#This is the list that will hold our halma board
 		self.screen = screen	#This is the window the GUI will go in
+		self.buttonContainer = None
 		self.moveStarted = False
 		self.selectedPiece = None
 		self.movedPieces = [None, None]
@@ -16,7 +17,7 @@ class HalmaGUI:
 		#Create status text, pass in self.statusText variable
 		self.status = Label(screen, textvariable = self.statusText, justify = CENTER, relief = RIDGE, width = 25)
 		#Add status text to GUI using grid() layout, it should be centered along the top of the halma grid
-		self.status.grid(row = 0, columnspan = dim, pady = 5)
+		self.status.grid(row = 0, column = 0, pady = 5)
 		
 		if(inputFile == None):
 			self.createBoard(dim)
@@ -24,14 +25,16 @@ class HalmaGUI:
 			self.loadFromFile(inputFile, dim)
 		
 		tkinter.Button(screen, text = "SAVE BOARD", command = lambda: self.saveModal(dim), relief = GROOVE)\
-			.grid(row = dim + 1, columnspan = dim, ipadx = 15, ipady = 3, pady = 5)
+			.grid(row = 2, column = 0, ipadx = 15, ipady = 3, pady = 5)
 		
 		#Add quit button to bottom of GUI, centered along halma grid
 		tkinter.Button(screen, text = "QUIT", command = self.quit, relief = GROOVE)\
-			.grid(row = dim + 2, columnspan = dim, ipadx = 15, ipady = 3, pady = 5)
+			.grid(row = 3, column = 0, ipadx = 15, ipady = 3, pady = 5)
 
 	def createBoard(self, dim):
 		#For loop to create buttons that make up halma board (dim^2 total)
+		self.buttonContainer = Canvas(self.screen)
+		self.buttonContainer.grid(row = 1, column = 0)
 		for i in range(dim):
 			for j in range(dim):
 				if(i + j + 2 <= dim/2 + 1):		#If top left corner, create button with red piece
@@ -40,6 +43,7 @@ class HalmaGUI:
 					self.board.append(['O', self.createButton(i, j, "blue")])
 				else:							#Else, create blank button (or blank halma square)
 					self.board.append([' ', self.createButton(i, j, "")])
+		self.createWinRegions(dim)
 	
 	def loadFromFile(self, inputFile, dim):
 		j = 0
@@ -97,12 +101,20 @@ class HalmaGUI:
 		saveModal.grab_set()
 		self.screen.wait_window(saveModal)
 	
-	def quitModal(self, inputModal):
-		inputModal.destroy()
+	def createWinRegions(self, dim):
+		#Y start = 45, increment 45
+		#X start = 46, increment 46
+		for i in range(0, dim//2):	#Draw upper left zone
+			self.buttonContainer.create_line(46*i, 45*(dim/2 - i), 46*(i + 1), 45*(dim/2 - i), width = 4)
+			self.buttonContainer.create_line(46*(i + 1), 45*(dim/2 - i), 46*(i + 1), 45*(dim/2 - i - 1), width = 4)
+		for i in range(0, dim//2):	#Draw bottom right zone
+			self.buttonContainer.create_line(46*(dim - i), 45*(dim/2 + i), 46*(dim - i - 1), 45*(dim/2 + i), width = 4)
+			self.buttonContainer.create_line(46*(dim - i - 1), 45*(dim/2 + i), 46*(dim - i - 1), 45*(dim/2 + i + 1), width = 4)
+		
 	
 	def createButton(self, i, j, color):	#Create a custom button using Canvas()
 		#Create initial button appearance (does nothing when clicked)
-		tempButton = Canvas(self.screen, borderwidth = 2, relief = GROOVE, width = 10, height = 23)
+		tempButton = Canvas(self.buttonContainer, borderwidth = 2, relief = GROOVE, width = 10, height = 23)
 		tempButton.grid(row = i+1, column = j, ipadx = 12, ipady = 5, padx = 2, pady = 2)
 		
 		#Draw type of circle, depending on button location
@@ -168,7 +180,10 @@ class HalmaGUI:
 				piece[1].create_oval(7, 7, 33, 33, fill = "red", outline = "red")
 			if piece[0] == 'O':
 				piece[1].create_oval(7, 7, 33, 33, fill = "blue", outline = "blue")
-		
+	
+	def quitModal(self, inputModal):
+		inputModal.destroy()
+	
 	def quit(self):	#Quit GUI
 		self.screen.destroy()
 
