@@ -15,7 +15,7 @@ class HalmaGUI:
 		self.statusText = StringVar()	#This is the status text at the top of the GUI
 		self.statusText.set("Select a piece to move")	#Initially set status to "The game has begun"
 		#Create status text, pass in self.statusText variable
-		self.status = Label(screen, textvariable = self.statusText, justify = CENTER, relief = RIDGE, width = 25)
+		self.status = Label(screen, textvariable = self.statusText, justify = CENTER, relief = RIDGE, width = 40)
 		#Add status text to GUI using grid() layout, it should be centered along the top of the halma grid
 		self.status.grid(row = 0, column = 0, pady = 5)
 		
@@ -26,6 +26,8 @@ class HalmaGUI:
 			self.createBoard()
 		else:
 			self.loadFromFile(inputFile)
+		
+		self.addLabels()
 		
 		tkinter.Button(screen, text = "SAVE BOARD", command = self.saveModal, relief = GROOVE)\
 			.grid(row = 2, column = 0, ipadx = 15, ipady = 3, pady = 5)
@@ -38,10 +40,10 @@ class HalmaGUI:
 		#For loop to create buttons that make up halma board (dim^2 total)
 		for i in range(self.dim):
 			for j in range(self.dim):
-				if(i + j + 2 <= self.dim/2 + 1):		#If top left corner, create button with red piece
+				if(self.inTopRight(i, j)):		#If top right corner, create button with red piece
 					self.board.append(['X', self.createButton(i, j, "red")])
-				elif(i + j + 2 >= self.dim*1.5 + 1):	#If bottom right, create button with blue piece
-					self.board.append(['O', self.createButton(i, j, "blue")])
+				elif(self.inBottomLeft(i, j)):	#If bottom left, create button with green piece
+					self.board.append(['O', self.createButton(i, j, "green")])
 				else:							#Else, create blank button (or blank halma square)
 					self.board.append([' ', self.createButton(i, j, "")])
 		self.createWinRegions()
@@ -55,13 +57,21 @@ class HalmaGUI:
 				if letter == 'X':
 					self.board.append(['X', self.createButton(i, j, "red")])
 				elif letter == 'O':
-					self.board.append(['O', self.createButton(i, j, "blue")])
+					self.board.append(['O', self.createButton(i, j, "green")])
 				elif letter == '_':
 					self.board.append([' ', self.createButton(i, j, "")])
 				j += 1
 			j = 0
 		fileID.close()
 		self.createWinRegions()
+	
+	def addLabels(self):
+		for i in range(self.dim):
+			Label(self.buttonContainer, text = i + 1, justify = CENTER)\
+			.grid(row = i + 1, column = self.dim + 1, ipadx = 5, ipady = 5, padx = 0, pady = 2)
+		for i in range(self.dim):
+			Label(self.buttonContainer, text = chr(i + 1 + 96), justify = CENTER)\
+			.grid(row = self.dim + 2, column = i, ipadx = 5, ipady = 5, padx = 0, pady = 2)
 	
 	def saveToFile(self, inputModal, outputFile):
 		i = 0
@@ -107,11 +117,11 @@ class HalmaGUI:
 		#Y start = 45, increment 45
 		#X start = 46, increment 46
 		for i in range(0, self.dim//2):	#Draw upper left zone
-			self.buttonContainer.create_line(46*i, 45*(self.dim/2 - i), 46*(i + 1), 45*(self.dim/2 - i), width = 4)
-			self.buttonContainer.create_line(46*(i + 1), 45*(self.dim/2 - i), 46*(i + 1), 45*(self.dim/2 - i - 1), width = 4)
+			self.buttonContainer.create_line(46*i, 45*(self.dim/2 + i), 46*(i + 1), 45*(self.dim/2 + i), width = 4)
+			self.buttonContainer.create_line(46*(i + 1), 45*(self.dim/2 + i), 46*(i + 1), 45*(self.dim/2 + i + 1), width = 4)
 		for i in range(0, self.dim//2):	#Draw bottom right zone
-			self.buttonContainer.create_line(46*(self.dim - i), 45*(self.dim/2 + i), 46*(self.dim - i - 1), 45*(self.dim/2 + i), width = 4)
-			self.buttonContainer.create_line(46*(self.dim - i - 1), 45*(self.dim/2 + i), 46*(self.dim - i - 1), 45*(self.dim/2 + i + 1), width = 4)
+			self.buttonContainer.create_line(46*(self.dim - i), 45*(self.dim/2 - i), 46*(self.dim - i - 1), 45*(self.dim/2 - i), width = 4)
+			self.buttonContainer.create_line(46*(self.dim - i - 1), 45*(self.dim/2 - i), 46*(self.dim - i - 1), 45*(self.dim/2 - i - 1), width = 4)
 		
 	def createButton(self, i, j, color):	#Create a custom button using Canvas()
 		#Create initial button appearance (does nothing when clicked)
@@ -172,28 +182,28 @@ class HalmaGUI:
 		for piece in self.board:	#Clear board
 			piece[1].delete("all")
 		
-		if self.selectedPiece != None:	#Mark selected pieces with green rectangle
-			self.selectedPiece[1].create_rectangle(0, 0, 36, 35, fill = "green", outline = "green")
+		if self.selectedPiece != None:	#Mark selected pieces with red rectangle
+			self.selectedPiece[1].create_rectangle(0, 0, 36, 35, fill = "blue", outline = "blue")
 			
 		if self.movedPieces[0] != None and self.movedPieces[1] != None:	#Mark spaces involving movement with yellow rectangle
 			self.movedPieces[0][1].create_rectangle(0, 0, 36, 35, fill = "yellow", outline = "yellow")
 			self.movedPieces[1][1].create_rectangle(0, 0, 36, 35, fill = "yellow", outline = "yellow")
 		
-		for piece in self.board:	#Mark X with red circle and O with blue circle
+		for piece in self.board:	#Mark X with red circle and O with green circle
 			if piece[0] == 'X':
 				piece[1].create_oval(7, 7, 33, 33, fill = "red", outline = "red")
 			if piece[0] == 'O':
-				piece[1].create_oval(7, 7, 33, 33, fill = "blue", outline = "blue")
+				piece[1].create_oval(7, 7, 33, 33, fill = "green", outline = "green")
 	
 	def gameWon(self):
 		winnerO = True
 		winnerX = True
 		for i in range(self.dim):
 			for j in range(self.dim):
-				if(i + j + 2 <= self.dim/2 + 1):		#If top left corner, create button with red piece
+				if(self.inTopRight(i, j)):		#If top right corner, create button with red piece
 					if self.board[i * self.dim + j][0] != 'O':
 						winnerO = False
-				elif(i + j + 2 >= self.dim*1.5 + 1):	#If bottom right, create button with blue piece
+				elif(self.inBottomLeft(i, j)):	#If bottom left, create button with green piece
 					if self.board[i * self.dim + j][0] != 'X':
 						winnerX = False
 		if winnerO and winnerX:
@@ -203,7 +213,19 @@ class HalmaGUI:
 			self.statusText.set("Team Red Wins!")
 			return True
 		elif winnerO:
-			self.statusText.set("Team Blue Wins!")
+			self.statusText.set("Team Green Wins!")
+			return True
+		else:
+			return False
+	
+	def inTopRight(self, i, j):	#Checks to see if a piece is in the top right of the board
+		if(i + self.dim - j + 1 <= self.dim/2 + 1):
+			return True
+		else:
+			return False
+		
+	def inBottomLeft(self, i, j):	#Checks to see if a piece is in the bottom left of the board
+		if(self.dim - i + j + 1 <= self.dim/2 + 1):
 			return True
 		else:
 			return False
