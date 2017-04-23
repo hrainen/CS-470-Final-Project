@@ -382,13 +382,22 @@ class HalmaGUI:
 					self.playerTurn = "X"
 				else:
 					self.playerTurn = "O"
-
+			else:# update label to say it is not that players turn
+				self.statusText.set("It is not your turn to move!")
+				self.screen.after(2000, self.resetLabel)
 		else:
-			print(self.valMovesSelect)
-			self.statusText.set("Not a valid move ("\
-				+ str(self.selectedPiece[2]//self.dim + 1) + "," + chr(self.selectedPiece[2]%self.dim + 97) + ")->("\
-				+ str(piece[2]//self.dim + 1) + "," + chr(piece[2]%self.dim + 97) + ")")
-			self.screen.after(2000, self.resetLabel)
+			# player has selected correct piece for their turn, but has selected an invalid spot to move to
+			if self.selectedPiece[0] == self.playerTurn:
+				print(self.valMovesSelect)
+				self.statusText.set("Not a valid move ("\
+					+ str(self.selectedPiece[2]//self.dim + 1) + "," + chr(self.selectedPiece[2]%self.dim + 97) + ")->("\
+					+ str(piece[2]//self.dim + 1) + "," + chr(piece[2]%self.dim + 97) + ")")
+				self.screen.after(2000, self.resetLabel)
+
+			# player has selected the wrong piece for their turn, tell them its the other players turn to move.
+			else:
+				self.statusText.set("It is not your turn to move!")
+				self.screen.after(2000, self.resetLabel)
 
 	def refreshBoard(self):	#Updates halma piece positions, and visuals
 		for piece in self.board:	#Clear board
