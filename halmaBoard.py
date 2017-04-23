@@ -118,7 +118,7 @@ class HalmaGUI:
 		# check if there are any jumps for the initial piece passed in
 		self.jumps = list(self.getJumps(self.coord, []))
 		if self.jumps != None:
-			self.valMoves + list(self.jumps)
+			self.valMoves = self.valMoves + list(self.jumps)
 		print("jumps: ", self.coord, ":", self.jumps)
 
 
