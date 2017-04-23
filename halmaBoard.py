@@ -21,7 +21,9 @@ class HalmaGUI:
 		
 		self.buttonContainer = Canvas(self.screen)
 		self.buttonContainer.grid(row = 1, column = 0)
-		
+
+		self.playerTurn = "O"
+
 		if(inputFile == None):
 			self.createBoard()
 		else:
@@ -357,21 +359,29 @@ class HalmaGUI:
 		self.statusText.set("Select a piece to move")
 	
 	def moveSelectedPiece(self, piece):	#Moves selectedPiece to the given piece location
-		# generate valid move positions for this piece, and if the location it wants to move to is in there
+		# generate valid move positions for this piece, and
 		self.valMovesSelect = self.getValidMoves(self.selectedPiece[2])
-		# move it to there
+		# if the location it wants to move to is in the list of valid moves
 		if self.indiceToCoord(piece[2]) in self.valMovesSelect[self.indiceToCoord(self.selectedPiece[2])]:
-			piece[0] = self.selectedPiece[0]
-			self.selectedPiece[0] = ' '
-			self.movedPieces = [piece, self.selectedPiece]
-			self.selectedPiece = None	#Deselect space, as there are no pieces there anymore
-			if self.gameWon():
-				self.disableBoard()
-			else:
-				self.statusText.set("A piece has been moved! ("\
-					+ str(self.movedPieces[1][2]//self.dim + 1) + "," + chr(self.movedPieces[1][2]%self.dim + 97) + ")->("\
-					+ str(self.movedPieces[0][2]//self.dim + 1) + "," + chr(self.movedPieces[0][2]%self.dim + 97) + ")")
-				self.screen.after(2000, self.resetLabel)
+			# and the piece selected belongs to the player whos turn it is
+			if self.selectedPiece[0] == self.playerTurn:
+				# Then move the piece there
+				piece[0] = self.selectedPiece[0]
+				self.selectedPiece[0] = ' '
+				self.movedPieces = [piece, self.selectedPiece]
+				self.selectedPiece = None	#Deselect space, as there are no pieces there anymore
+				if self.gameWon():
+					self.disableBoard()
+				else:
+					self.statusText.set("A piece has been moved! ("\
+						+ str(self.movedPieces[1][2]//self.dim + 1) + "," + chr(self.movedPieces[1][2]%self.dim + 97) + ")->("\
+						+ str(self.movedPieces[0][2]//self.dim + 1) + "," + chr(self.movedPieces[0][2]%self.dim + 97) + ")")
+					self.screen.after(2000, self.resetLabel)
+				# Update self.playerTurn to be the opponents turn
+				if self.playerTurn == "O":
+					self.playerTurn = "X"
+				else:
+					self.playerTurn = "O"
 
 		else:
 			print(self.valMovesSelect)
