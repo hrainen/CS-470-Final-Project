@@ -148,6 +148,7 @@ class HalmaGUI:
 	# returns a list of valid positions something can jump to.
 	def getJumps(self, pos, seen):
 		self.valJumps = [] # keeps track of valid jump positions.
+		self.newSeen = list(seen)  # new seen list to add any valid jumps we visit to
 
 		#coords of potential adjacent jumps
 		self.adjJumps = [(-2, -2), (0, -2), (2, -2),
@@ -185,8 +186,11 @@ class HalmaGUI:
 							# and the spot we want to jump to is not occupied by a piece, add to valid moves
 							if self.board[self.jIndice][0] == " ":
 								self.valJumps.append(self.jumpCoord)
+								self.newSeen.append(self.jumpCoord)
 
 		# recursively find any more jump positions, update seen to have the place we just jumped to
+		for valJump in self.valJumps:
+			self.valJumps = self.valJumps + list(self.getJumps(valJump, self.newSeen))
 
 		if self.valJumps != None:
 			return self.valJumps
