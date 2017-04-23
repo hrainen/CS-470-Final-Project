@@ -43,22 +43,43 @@ class HalmaGUI:
 		tkinter.Button(screen, text="genMovesTestGreen", command=self.genMovesGreen, relief=GROOVE) \
 			.grid(row=5, column=0, ipadx=15, ipady=3, pady=5)
 
+		#Add button to test indices
+		tkinter.Button(screen, text="Indice Text", command=self.printindice, relief=GROOVE) \
+			.grid(row=6, column=0, ipadx=15, ipady=3, pady=5)
+
 	def createBoard(self):
 		#For loop to create buttons that make up halma board (dim^2 total)
+		self.counter = 0
+
 		for i in range(self.dim):
 			for j in range(self.dim):
 				if(self.inTopRight(i, j)):		#If top right corner, create button with red piece
-					self.board.append(['X', self.createButton(i, j, "red")])
+					self.board.append(['X', self.createButton(i, j, "red"), self.counter])
+
 				elif(self.inBottomLeft(i, j)):	#If bottom left, create button with green piece
-					self.board.append(['O', self.createButton(i, j, "green")])
+					self.board.append(['O', self.createButton(i, j, "green"), self.counter])
+
 				else:							#Else, create blank button (or blank halma square)
-					self.board.append([' ', self.createButton(i, j, "")])
+					self.board.append([' ', self.createButton(i, j, ""), self.counter])
+
+				self.counter += 1
 		self.createWinRegions()
 
 	''' I think i know what to do for restricting movement for a player,
 		when we get the turn taking working, just find valid moves for
 		whos turn it is, more on this later '''
 
+	def coordToIndice(self, coord):
+		return coord[0] + self.dim*coord[1]
+
+	def indiceToCoord(self, indice):
+		x = indice % self.dim
+		y = indice // self.dim
+		return (x,y)
+
+	def printindice(self):
+		for x in self.board:
+			print(x[2])
 
 	# @ params: No params for now
 	# returns a dictionary where the key is the piece we want to move,
@@ -70,7 +91,7 @@ class HalmaGUI:
 		for i in range(self.dim*self.dim):
 			if self.board[i][0] == "X": # generate valid moves for that piece
 				self.allValMoves.update(self.getValidMoves(i))
-		print(self.allValMoves)
+		return self.allValMoves
 
 	def genMovesGreen(self):
 		self.allValMoves = {} 		# append dictionaries for pieces and their valid moves here
@@ -79,7 +100,7 @@ class HalmaGUI:
 		for i in range(self.dim*self.dim):
 			if self.board[i][0] == "O": # generate valid moves for that piece
 				self.allValMoves.update(self.getValidMoves(i))
-		print(self.allValMoves)
+		return self.allValMoves
 
 
 	# @ params: takes in position(list index) for the piece we want to find valid moves for
@@ -132,7 +153,7 @@ class HalmaGUI:
 		self.jumps = list(self.getJumps(self.coord, []))
 		if self.jumps != None:
 			self.valMoves = self.valMoves + list(self.jumps)
-		print("jumps: ", self.coord, ":", self.jumps)
+		#print("jumps: ", self.coord, ":", self.jumps)
 
 
 		return {self.coord: self.valMoves} 	#returns valid positions for one piece to move to
@@ -214,16 +235,20 @@ class HalmaGUI:
 
 	def loadFromFile(self, inputFile):
 		j = 0
+		self.counter = 0
 		fileID = open(inputFile, 'r')
 		for i in range(self.dim):
 			row = fileID.readline().split( )
 			for letter in row:
 				if letter == 'X':
-					self.board.append(['X', self.createButton(i, j, "red")])
+					self.board.append(['X', self.createButton(i, j, "red"), self.counter])
+
 				elif letter == 'O':
-					self.board.append(['O', self.createButton(i, j, "green")])
+					self.board.append(['O', self.createButton(i, j, "green"), self.counter])
+
 				elif letter == '_':
-					self.board.append([' ', self.createButton(i, j, "")])
+					self.board.append([' ', self.createButton(i, j, ""), self.counter])
+				self.counter += 1
 				j += 1
 			j = 0
 		fileID.close()
@@ -332,14 +357,23 @@ class HalmaGUI:
 		self.statusText.set("Select a piece to move")
 	
 	def moveSelectedPiece(self, piece):	#Moves selectedPiece to the given piece location
-		piece[0] = self.selectedPiece[0]
-		self.selectedPiece[0] = ' '
-		self.movedPieces = [piece, self.selectedPiece]
-		self.selectedPiece = None	#Deselect space, as there are no pieces there anymore
-		if self.gameWon():
-			self.disableBoard()
+		# generate valid move positions for this piece, and if the location it wants to move to is in there
+		self.valMovesSelect = self.getValidMoves(self.selectedPiece[2])
+		# move it to there
+		if self.indiceToCoord(piece[2]) in self.valMovesSelect[self.indiceToCoord(self.selectedPiece[2])]:
+			piece[0] = self.selectedPiece[0]
+			self.selectedPiece[0] = ' '
+			self.movedPieces = [piece, self.selectedPiece]
+			self.selectedPiece = None	#Deselect space, as there are no pieces there anymore
+			if self.gameWon():
+				self.disableBoard()
+			else:
+				self.statusText.set("A piece has been moved!")
+				self.screen.after(2000, self.resetLabel)
+
 		else:
-			self.statusText.set("A piece has been moved!")
+			print(self.valMovesSelect)
+			self.statusText.set("Not a valid move")
 			self.screen.after(2000, self.resetLabel)
 
 	def refreshBoard(self):	#Updates halma piece positions, and visuals
