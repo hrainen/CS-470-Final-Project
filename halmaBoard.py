@@ -36,8 +36,12 @@ class HalmaGUI:
 		tkinter.Button(screen, text = "QUIT", command = self.quit, relief = GROOVE)\
 			.grid(row = 3, column = 0, ipadx = 15, ipady = 3, pady = 5)
 
-		tkinter.Button(screen, text="genMovesTest", command=self.genMovesRed, relief=GROOVE) \
+		#Add buttons to test gen moves
+		tkinter.Button(screen, text="genMovesTestRed", command=self.genMovesRed, relief=GROOVE) \
 			.grid(row=4, column=0, ipadx=15, ipady=3, pady=5)
+
+		tkinter.Button(screen, text="genMovesTestGreen", command=self.genMovesGreen, relief=GROOVE) \
+			.grid(row=5, column=0, ipadx=15, ipady=3, pady=5)
 
 	def createBoard(self):
 		#For loop to create buttons that make up halma board (dim^2 total)
@@ -65,6 +69,15 @@ class HalmaGUI:
 		# loop through the board, if the piece being checked belongs to the player whos moves we're generating
 		for i in range(self.dim*self.dim):
 			if self.board[i][0] == "X": # generate valid moves for that piece
+				self.allValMoves.update(self.getValidMoves(i))
+		print(self.allValMoves)
+
+	def genMovesGreen(self):
+		self.allValMoves = {} 		# append dictionaries for pieces and their valid moves here
+
+		# loop through the board, if the piece being checked belongs to the player whos moves we're generating
+		for i in range(self.dim*self.dim):
+			if self.board[i][0] == "O": # generate valid moves for that piece
 				self.allValMoves.update(self.getValidMoves(i))
 		print(self.allValMoves)
 
