@@ -87,20 +87,111 @@ class HalmaGUI:
 			self.newY = self.Y + j[1] # gets the actual adjacent Y value
 			self.newCoord = (self.newX, self.newY)
 
-			self.newIndice = self.newCoord[0] + self.newCoord[1]*self.dim 		# indice on board
+			self.newIndice = self.newCoord[0] + self.newCoord[1]*self.dim
 
 
 			# checks if the adjacent X position is in bounds
 			if self.newX >= 0 and self.newX < self.dim:
-				# checks if the adjacent Y position is in bounds and if the position is blank (no piece is there)
-				if self.newY >= 0 and self.newY < self.dim and self.board[self.newIndice][0] == " ":
-					# add that position to the list of valid positions
-					self.valMoves.append(self.newCoord)
+				# checks if the adjacent Y position is in bounds
+				if self.newY >= 0 and self.newY < self.dim:
+					#  if the position is blank (no piece is there)
+					if self.board[self.newIndice][0] == " ":
+						# add that position to the list of valid positions
+						self.valMoves.append(self.newCoord)
+					"""
+					# else, there is a piece there (red or blue) doesnt matter whos, you might be able to jump from there
+					else:
+						# get the position we want to jump to
+						self.jumpToX = self.X + j[0]*2
+						self.jumpToY = self.Y + j[1]*2
+						self.jumpToCoord = (self.jumpToX, self.jumpToY)
 
-			# if an adjacent position has a piece there, check to see if initial piece can jump over the adjacent piece
-			# call a get jump positions function ***here***
+						# call getJumps and append any valid jumps to the list of valid jumps
+						self.jumps = self.getJumps(self.jumpToCoord, [])
+						if self.jumps != None:
+							self.valMoves += self.jumps
+							print("jumps: ", self.coord, ":", self.jumps)
+					"""
+
+		# check if there are any jumps for the initial piece passed in
+		self.jumps = list(self.getJumps(self.coord, []))
+		if self.jumps != None:
+			self.valMoves + list(self.jumps)
+		print("jumps: ", self.coord, ":", self.jumps)
+
 
 		return {self.coord: self.valMoves} 	#returns valid positions for one piece to move to
+	"""
+	def getJumps(self, jpos, seen):
+		# list of valid jumps to return
+		self.validJumps = []
+
+		# convert jpos into indice
+		self.jIndice = jpos[0] + jpos[1]*self.dim
+
+		# check if jump is in bounds
+		if jpos[0] >= 0 and jpos[0] < self.dim:
+			if jpos[1] >= 0 and jpos[1] < self.dim:
+				# and not in list of seen positions.
+				if jpos not in seen:
+					# and the spot we want to jump to is not occupied by a piece, add to valid moves
+					if self.board[self.jIndice][0] == " ":
+						self.validJumps.append(jpos)
+						return self.validJumps
+
+		return None
+	"""
+
+	# @ params: takes in the position you want to jump to, and the list of seen positions
+	# returns a list of valid positions something can jump to.
+	def getJumps(self, pos, seen):
+		self.valJumps = [] # keeps track of valid jump positions.
+
+		#coords of potential adjacent jumps
+		self.adjJumps = [(-2, -2), (0, -2), (2, -2),
+						 (-2, 0), 			(2, 0),
+						 (-2, 2), (0, 2),   (2, 2)]
+
+		# the coordinates of adjacent squares
+		self.adjPos = [(-1, -1), (0, -1), (1, -1),
+					   (-1, 0), 		  (1, 0),
+					   (-1, 1),  (0, 1),  (1, 1)]
+
+		for z in range(0,8):
+			self.newAdjX = pos[0] + self.adjPos[z][0]
+			self.newAdjY = pos[1] + self.adjPos[z][1]
+			self.newAdjCoord = (self.newAdjX, self.newAdjY)
+
+			self.adjIndic = self.newAdjCoord[0] + self.newAdjCoord[1]*self.dim
+
+
+			self.jumpX = pos[0] + self.adjJumps[z][0]  # gets the jump X value
+			self.jumpY = pos[1] + self.adjJumps[z][1]  # gets the jump Y value
+			self.jumpCoord = (self.jumpX, self.jumpY) # makes tuple for the X,Y for the jump coord
+
+			# convert new jump (X,Y) to an indice
+			self.jIndice = self.jumpCoord[0] + self.jumpCoord[1] * self.dim
+
+
+			# check if jumpcoord is in bounds
+			if self.jumpX >= 0 and self.jumpX < self.dim:
+				if self.jumpY >= 0 and self.jumpY < self.dim:
+					# and not in list of seen positions.
+					if self.jumpCoord not in seen:
+						# if there is a piece before the jump
+						if self.board[self.adjIndic][0] != " ":
+							# and the spot we want to jump to is not occupied by a piece, add to valid moves
+							if self.board[self.jIndice][0] == " ":
+								self.valJumps.append(self.jumpCoord)
+
+		# recursively find any more jump positions, update seen to have the place we just jumped to
+
+		if self.valJumps != None:
+			return self.valJumps
+		else:
+			return None
+
+
 
 	def loadFromFile(self, inputFile):
 		j = 0
