@@ -155,7 +155,7 @@ class HalmaGUI:
 						 (-2, 0), 			(2, 0),
 						 (-2, 2), (0, 2),   (2, 2)]
 
-		# the coordinates of adjacent squares
+		# the coordinates of potential adjacent pieces to jump over
 		self.adjPos = [(-1, -1), (0, -1), (1, -1),
 					   (-1, 0), 		  (1, 0),
 					   (-1, 1),  (0, 1),  (1, 1)]
