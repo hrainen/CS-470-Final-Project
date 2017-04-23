@@ -368,12 +368,16 @@ class HalmaGUI:
 			if self.gameWon():
 				self.disableBoard()
 			else:
-				self.statusText.set("A piece has been moved!")
+				self.statusText.set("A piece has been moved! ("\
+					+ str(self.movedPieces[1][2]//self.dim + 1) + "," + chr(self.movedPieces[1][2]%self.dim + 97) + ")->("\
+					+ str(self.movedPieces[0][2]//self.dim + 1) + "," + chr(self.movedPieces[0][2]%self.dim + 97) + ")")
 				self.screen.after(2000, self.resetLabel)
 
 		else:
 			print(self.valMovesSelect)
-			self.statusText.set("Not a valid move")
+			self.statusText.set("Not a valid move ("\
+				+ str(self.selectedPiece[2]//self.dim + 1) + "," + chr(self.selectedPiece[2]%self.dim + 97) + ")->("\
+				+ str(piece[2]//self.dim + 1) + "," + chr(piece[2]%self.dim + 97) + ")")
 			self.screen.after(2000, self.resetLabel)
 
 	def refreshBoard(self):	#Updates halma piece positions, and visuals
