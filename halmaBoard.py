@@ -156,9 +156,13 @@ class HalmaGUI:
 		if self.jumps != None:
 			self.valMoves = self.valMoves + list(self.jumps)
 		#print("jumps: ", self.coord, ":", self.jumps)
-
-
-		return {self.coord: self.valMoves} 	#returns valid positions for one piece to move to
+		
+		validatedMoves = []		#Filters moves based on whether they follow territory rules
+		for move in self.valMoves:
+			if self.territoryConflict(self.board[self.coord[0] + self.dim*self.coord[1]], self.board[move[0] + self.dim*move[1]]):
+				continue
+			validatedMoves.append(move)
+		return {self.coord: validatedMoves} 	#returns valid positions for one piece to move to
 	"""
 	def getJumps(self, jpos, seen):
 		# list of valid jumps to return
@@ -365,8 +369,7 @@ class HalmaGUI:
 		# generate valid move positions for this piece, and
 		self.valMovesSelect = self.getValidMoves(self.selectedPiece[2])
 		# if the location it wants to move to is in the list of valid moves, and no territory conflicts arise
-		if self.indiceToCoord(piece[2]) in self.valMovesSelect[self.indiceToCoord(self.selectedPiece[2])]\
-			and not self.territoryConflict(self.selectedPiece, piece):
+		if self.indiceToCoord(piece[2]) in self.valMovesSelect[self.indiceToCoord(self.selectedPiece[2])]:
 			# and the piece selected belongs to the player whos turn it is
 			if self.selectedPiece[0] == self.playerTurn:
 				# Then move the piece there
