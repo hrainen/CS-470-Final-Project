@@ -169,7 +169,7 @@ class HalmaGUI:
 		
 		validatedMoves = []		#Filters moves based on whether they follow territory rules
 		for move in self.valMoves:
-			if self.territoryConflict(self.board[self.coord[0] + self.dim*self.coord[1]], self.board[move[0] + self.dim*move[1]]):
+			if self.territoryConflict(self.board[self.coordToIndice(self.coord)], self.board[self.coordToIndice(move)]):
 				continue
 			validatedMoves.append(move)
 		return {self.coord: validatedMoves} 	#returns valid positions for one piece to move to

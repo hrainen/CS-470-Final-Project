@@ -16,8 +16,8 @@ class ProjectTBD:
 			possibleMoves = self.GUI.genMovesRed()
 		
 		chosenPiece = random.choice(list(possibleMoves.items()))
-		self.GUI.selectedPiece = self.GUI.board[(chosenPiece[0])[0] + self.GUI.dim*(chosenPiece[0])[1]]
+		self.GUI.selectedPiece = self.GUI.board[self.GUI.coordToIndice(chosenPiece[0])]
 		chosenMove = random.choice(list(chosenPiece[1]))
-		self.GUI.moveSelectedPiece(self.GUI.board[chosenMove[0] + self.GUI.dim*chosenMove[1]])
+		self.GUI.moveSelectedPiece(self.GUI.board[self.GUI.coordToIndice(chosenMove)])
 		
 		self.GUI.refreshBoard()
