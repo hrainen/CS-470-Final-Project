@@ -2,14 +2,17 @@ import tkinter
 import time
 import sys
 from tkinter import *
+from taklamakan import Taklamakan
 
 class HalmaGUI:
 
-	def __init__(self, screen, dim, inputFile):
+	def __init__(self, screen, dim, inputFile, computerColor):
 		self.board = []			#This is the list that will hold our halma board
 		self.screen = screen	#This is the window the GUI will go in
 		self.selectedPiece = None	#This will hold a selected piece
 		self.movedPieces = [None, None]		#This holds recently moved positions
+		self.computer = None
+		self.computerColor = computerColor
 		self.dim = dim						#Holds board dimensions
 		self.statusText = StringVar()	#This is the status text at the top of the GUI
 		self.statusText.set("Select a piece to move")	#Initially set status
@@ -49,6 +52,13 @@ class HalmaGUI:
 		#tkinter.Button(screen, text="Indice Text", command=self.printindice, relief=GROOVE) \
 		#	.grid(row=6, column=0, ipadx=15, ipady=3, pady=5)
 
+	def configureComputer(self, computer):	#Puts computer AI into global variable
+		self.computer = computer
+		#Query computer for a move on its turn
+		if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green"):
+			self.statusText.set("The computer is thinking...")
+			self.screen.after(2000, self.computer.makeMove)
+		
 	def createBoard(self):
 		#For loop to create buttons that make up halma board (dim^2 total)
 		self.counter = 0
@@ -360,6 +370,11 @@ class HalmaGUI:
 					self.statusText.set("That space is currently occupied")
 				else:				#If space is empty, move selected piece to that location!
 					self.moveSelectedPiece(piece)
+					#Query computer for a move on its turn
+					if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green"):
+						self.statusText.set("The computer is thinking...")
+						self.screen.after(2000, self.computer.makeMove)
+						#self.computer.makeMove()
 		self.refreshBoard()			#Update board to show changes
 	
 	def resetLabel(self):	#Generic text to guide user to action
@@ -389,6 +404,7 @@ class HalmaGUI:
 					self.playerTurn = "X"
 				else:
 					self.playerTurn = "O"
+				
 			else:# update label to say it is not that players turn
 				self.statusText.set("It is not your turn to move!")
 				self.screen.after(2000, self.resetLabel)
@@ -488,13 +504,17 @@ class HalmaGUI:
 
 
 screen = tkinter.Tk(className = "Halma GUI")	#Create window for GUI
-if len(sys.argv) == 2:
-	theGUI = HalmaGUI(screen, int(sys.argv[1]), None)	#Create HalmaGUI object, pass in window and dimensions
-elif len(sys.argv) == 3:
-	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[2])	#Create HalmaGUI object, pass in window, dimensions, and input file
+if len(sys.argv) == 4:
+	theGUI = HalmaGUI(screen, int(sys.argv[1]), None, sys.argv[3])	#Create HalmaGUI object, pass in window and dimensions
+	theMind = Taklamakan(theGUI, sys.argv[3])
+	theGUI.configureComputer(theMind)
+elif len(sys.argv) == 5:
+	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[2], sys.argv[3])	#Create HalmaGUI object, pass in window, dimensions, and input file
+	theMind = Taklamakan(theGUI, sys.argv[3])
+	theGUI.configureComputer(theMind)
 else:
 	print ("""You must run the program with one of two commands:
-	1. python halmaBoard.py dimensions
-	2. python halmaBoard.py dimensions inputFile.txt""")
+	1. python halmaBoard.py dimensions time_limit computer_player
+	2. python halmaBoard.py dimensions time_limit computer_player inputFile.txt""")
 	sys.exit()
 screen.mainloop()	#Run GUI
