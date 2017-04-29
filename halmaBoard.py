@@ -2,7 +2,7 @@ import tkinter
 import time
 import sys
 from tkinter import *
-from taklamakan import Taklamakan
+from projectTBD import ProjectTBD
 
 class HalmaGUI:
 
@@ -506,11 +506,11 @@ class HalmaGUI:
 screen = tkinter.Tk(className = "Halma GUI")	#Create window for GUI
 if len(sys.argv) == 4:
 	theGUI = HalmaGUI(screen, int(sys.argv[1]), None, sys.argv[3])	#Create HalmaGUI object, pass in window and dimensions
-	theMind = Taklamakan(theGUI, sys.argv[3])
+	theMind = ProjectTBD(theGUI, sys.argv[3])
 	theGUI.configureComputer(theMind)
 elif len(sys.argv) == 5:
 	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[2], sys.argv[3])	#Create HalmaGUI object, pass in window, dimensions, and input file
-	theMind = Taklamakan(theGUI, sys.argv[3])
+	theMind = ProjectTBD(theGUI, sys.argv[3])
 	theGUI.configureComputer(theMind)
 else:
 	print ("""You must run the program with one of two commands:
