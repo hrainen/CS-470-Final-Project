@@ -6,7 +6,7 @@ from projectTBD import ProjectTBD
 
 class HalmaGUI:
 
-	def __init__(self, screen, dim, inputFile, computerColor):
+	def __init__(self, screen, dim, computerColor, inputFile):
 		self.board = []			#This is the list that will hold our halma board
 		self.screen = screen	#This is the window the GUI will go in
 		self.selectedPiece = None	#This will hold a selected piece
@@ -57,7 +57,7 @@ class HalmaGUI:
 		#Query computer for a move on its turn
 		if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green"):
 			self.statusText.set("The computer is thinking...")
-			self.screen.after(2000, self.computer.makeMove)
+			self.screen.after(500, self.computer.calculateMove)
 		
 	def createBoard(self):
 		#For loop to create buttons that make up halma board (dim^2 total)
@@ -373,8 +373,7 @@ class HalmaGUI:
 					#Query computer for a move on its turn
 					if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green"):
 						self.statusText.set("The computer is thinking...")
-						self.screen.after(2000, self.computer.makeMove)
-						#self.computer.makeMove()
+						self.screen.after(500, self.computer.calculateMove)
 		self.refreshBoard()			#Update board to show changes
 	
 	def resetLabel(self):	#Generic text to guide user to action
@@ -398,7 +397,6 @@ class HalmaGUI:
 					self.statusText.set("A piece has been moved! ("\
 						+ str(self.movedPieces[1][2]//self.dim + 1) + "," + chr(self.movedPieces[1][2]%self.dim + 97) + ")->("\
 						+ str(self.movedPieces[0][2]//self.dim + 1) + "," + chr(self.movedPieces[0][2]%self.dim + 97) + ")")
-					self.screen.after(2000, self.resetLabel)
 				# Update self.playerTurn to be the opponents turn
 				if self.playerTurn == "O":
 					self.playerTurn = "X"
@@ -407,7 +405,6 @@ class HalmaGUI:
 				
 			else:# update label to say it is not that players turn
 				self.statusText.set("It is not your turn to move!")
-				self.screen.after(2000, self.resetLabel)
 		else:
 			# player has selected correct piece for their turn, but has selected an invalid spot to move to
 			if self.selectedPiece[0] == self.playerTurn:
@@ -415,12 +412,10 @@ class HalmaGUI:
 				self.statusText.set("Not a valid move ("\
 					+ str(self.selectedPiece[2]//self.dim + 1) + "," + chr(self.selectedPiece[2]%self.dim + 97) + ")->("\
 					+ str(piece[2]//self.dim + 1) + "," + chr(piece[2]%self.dim + 97) + ")")
-				self.screen.after(2000, self.resetLabel)
 
 			# player has selected the wrong piece for their turn, tell them its the other players turn to move.
 			else:
 				self.statusText.set("It is not your turn to move!")
-				self.screen.after(2000, self.resetLabel)
 	
 	def territoryConflict(self, start, end):	#Checks to see if a player is trying an illegal move concerning territories
 		#If green is in enemy territory, it cannot move back out
@@ -505,12 +500,12 @@ class HalmaGUI:
 
 screen = tkinter.Tk(className = "Halma GUI")	#Create window for GUI
 if len(sys.argv) == 4:
-	theGUI = HalmaGUI(screen, int(sys.argv[1]), None, sys.argv[3])	#Create HalmaGUI object, pass in window and dimensions
-	theMind = ProjectTBD(theGUI, sys.argv[3])
+	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[3], None)	#Create HalmaGUI object, pass in window and dimensions
+	theMind = ProjectTBD(theGUI, int(sys.argv[2]), sys.argv[3])
 	theGUI.configureComputer(theMind)
 elif len(sys.argv) == 5:
-	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[2], sys.argv[3])	#Create HalmaGUI object, pass in window, dimensions, and input file
-	theMind = ProjectTBD(theGUI, sys.argv[3])
+	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[3], sys.argv[4])	#Create HalmaGUI object, pass in window, dimensions, and input file
+	theMind = ProjectTBD(theGUI, int(sys.argv[2]), sys.argv[3])
 	theGUI.configureComputer(theMind)
 else:
 	print ("""You must run the program with one of two commands:
