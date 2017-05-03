@@ -2,38 +2,35 @@ import tkinter
 import time
 import sys
 from tkinter import *
-from projectTBD import ProjectTBD
 
 class HalmaGUI:
 
-	def __init__(self, screen, dim, computerColor, inputFile):
+	def __init__(self, screen, dim, inputFile):
 		self.board = []			#This is the list that will hold our halma board
 		self.screen = screen	#This is the window the GUI will go in
-		self.selectedPiece = None	#This will hold a selected piece
-		self.movedPieces = [None, None]		#This holds recently moved positions
-		self.computer = None
-		self.computerColor = computerColor
-		self.dim = dim						#Holds board dimensions
+		self.moveStarted = False
+		self.selectedPiece = None
+		self.movedPieces = [None, None]
+		self.dim = dim
 		self.statusText = StringVar()	#This is the status text at the top of the GUI
-		self.statusText.set("Select a piece to move")	#Initially set status
+		self.statusText.set("Select a piece to move")	#Initially set status to "The game has begun"
 		#Create status text, pass in self.statusText variable
 		self.status = Label(screen, textvariable = self.statusText, justify = CENTER, relief = RIDGE, width = 40)
 		#Add status text to GUI using grid() layout, it should be centered along the top of the halma grid
 		self.status.grid(row = 0, column = 0, pady = 5)
 		
-		self.buttonContainer = Canvas(self.screen)	#Create canvas to hold game board
-		self.buttonContainer.grid(row = 1, column = 0)	#Put right after status
+		self.buttonContainer = Canvas(self.screen)
+		self.buttonContainer.grid(row = 1, column = 0)
 
-		self.playerTurn = "O"	#Green always goes first
+		self.playerTurn = "O"
 
-		if(inputFile == None):	#If no input file, create new board
+		if(inputFile == None):
 			self.createBoard()
-		else:					#If there is an input file, load board from file
+		else:
 			self.loadFromFile(inputFile)
 		
-		self.addLabels()		#Add labels to board
+		self.addLabels()
 		
-		#Add button activate save modal, so that user can save board
 		tkinter.Button(screen, text = "SAVE BOARD", command = self.saveModal, relief = GROOVE)\
 			.grid(row = 2, column = 0, ipadx = 15, ipady = 3, pady = 5)
 		
@@ -41,24 +38,21 @@ class HalmaGUI:
 		tkinter.Button(screen, text = "QUIT", command = self.quit, relief = GROOVE)\
 			.grid(row = 3, column = 0, ipadx = 15, ipady = 3, pady = 5)
 
+		"""
 		#Add buttons to test gen moves
-		#tkinter.Button(screen, text="genMovesTestRed", command=self.genMovesRed, relief=GROOVE) \
-		#	.grid(row=4, column=0, ipadx=15, ipady=3, pady=5)
+		tkinter.Button(screen, text="genMovesTestRed", command=self.genMovesRed, relief=GROOVE) \
+			.grid(row=4, column=0, ipadx=15, ipady=3, pady=5)
 
-		#tkinter.Button(screen, text="genMovesTestGreen", command=self.genMovesGreen, relief=GROOVE) \
-		#	.grid(row=5, column=0, ipadx=15, ipady=3, pady=5)
+		tkinter.Button(screen, text="genMovesTestGreen", command=self.genMovesGreen, relief=GROOVE) \
+			.grid(row=5, column=0, ipadx=15, ipady=3, pady=5)
 
 		#Add button to test indices
-		#tkinter.Button(screen, text="Indice Text", command=self.printindice, relief=GROOVE) \
-		#	.grid(row=6, column=0, ipadx=15, ipady=3, pady=5)
+		tkinter.Button(screen, text="Indice Text", command=self.printindice, relief=GROOVE) \
+			.grid(row=6, column=0, ipadx=15, ipady=3, pady=5)
+		"""
+		tkinter.Button(screen, text="hueristictest", command=self.heuristicVal, relief=GROOVE) \
+			.grid(row=4, column=0, ipadx=15, ipady=3, pady=5)
 
-	def configureComputer(self, computer):	#Puts computer AI into global variable
-		self.computer = computer
-		#Query computer for a move on its turn
-		if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green"):
-			self.statusText.set("The computer is thinking...")
-			self.screen.after(500, self.computer.calculateMove)
-		
 	def createBoard(self):
 		#For loop to create buttons that make up halma board (dim^2 total)
 		self.counter = 0
@@ -75,21 +69,70 @@ class HalmaGUI:
 					self.board.append([' ', self.createButton(i, j, ""), self.counter])
 
 				self.counter += 1
-		self.createWinRegions()	#Draw win regions, or territory boundaries
+		self.createWinRegions()
+
+	"""For hueristicVal, it should take in the board you want to check, a piece you want to move,
+	   and the position you want to move the pice too
+
+	   For now though, parameters will be empty for button testing"""
+	def heuristicVal(self):
+		self.redCorner = self.dim-1					#this is the farthest corner in the red base
+		self.redCornerCoord = self.indiceToCoord(self.redCorner)
+		self.grnCorner = (self.dim*(self.dim-1))	#this is the farthest corner in the grn base
+		self.grnCornerCoord = self.indiceToCoord(self.grnCorner)
+
+		# stores dictionary of valid moves for red team
+		self.redMoves = self.genMovesRed() #stores valid moves for red player
+
+		self.redPieces = list(self.redMoves)# stores all the keys in the valid red moves dictionary in a list
+		# if red piece, calc is slightly different/ direction you want to go is different
+
+		#distance between two points = sqrt((Ynew - Yold)^2+(Xnew-Xold)^2)
+
+		#first find distance between the piece we want to move, and the enemy corner
+		self.redX = self.redPieces[0][0] #X-coordinate of first key in dictionary
+		self.redY = self.redPieces[0][1] #Y-coordinate of first key in dictionary
+		self.posDist = int(((self.grnCornerCoord[1]-self.redY)**2+(self.grnCornerCoord[0]-self.redX)**2)**(1/2))
+
+
+
+		#then find distance between the potential spot we want to move to (testing on first key value pair), and the green corner
+		value = self.redMoves[self.redPieces[0]]
+		newX = value[0][0]
+		newY = value[0][1]
+
+		newPosDist = int(((self.grnCornerCoord[1]-newY)**2+(self.grnCornerCoord[0]-newX)**2)**(1/2))
+		#print("original dist: ", self.posDist)
+		#print("new dist: ", newPosDist)
+
+		# this is a positive or negative value depending on if were moving towards the enemy corner or away from it
+		self.delta = self.posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
+
+		# some helper print statements to see what is going on.
+		print((self.redX,self.redY), "to",(newX, newY), "goodness: ", self.delta)
+
+		if self.delta > 0:
+			return (self.delta)
+		else:
+			return (self.delta)
+
+
+		# return (x,y) to (x,y), goodness: Value
+
 
 	''' I think i know what to do for restricting movement for a player,
 		when we get the turn taking working, just find valid moves for
 		whos turn it is, more on this later '''
 
-	def coordToIndice(self, coord):		#Convert coordinates to the proper index
+	def coordToIndice(self, coord):
 		return coord[0] + self.dim*coord[1]
 
-	def indiceToCoord(self, indice):	#Convert an index to the proper coordinates
+	def indiceToCoord(self, indice):
 		x = indice % self.dim
 		y = indice // self.dim
 		return (x,y)
 
-	def printindice(self):				#Print index for testing
+	def printindice(self):
 		for x in self.board:
 			print(x[2])
 
@@ -112,6 +155,7 @@ class HalmaGUI:
 		for i in range(self.dim*self.dim):
 			if self.board[i][0] == "O": # generate valid moves for that piece
 				self.allValMoves.update(self.getValidMoves(i))
+		print(self.allValMoves)
 		return self.allValMoves
 
 
@@ -166,13 +210,9 @@ class HalmaGUI:
 		if self.jumps != None:
 			self.valMoves = self.valMoves + list(self.jumps)
 		#print("jumps: ", self.coord, ":", self.jumps)
-		
-		validatedMoves = []		#Filters moves based on whether they follow territory rules
-		for move in self.valMoves:
-			if self.territoryConflict(self.board[self.coordToIndice(self.coord)], self.board[self.coordToIndice(move)]):
-				continue
-			validatedMoves.append(move)
-		return {self.coord: validatedMoves} 	#returns valid positions for one piece to move to
+
+
+		return {self.coord: self.valMoves} 	#returns valid positions for one piece to move to
 	"""
 	def getJumps(self, jpos, seen):
 		# list of valid jumps to return
@@ -247,28 +287,30 @@ class HalmaGUI:
 		else:
 			return None
 
-	def loadFromFile(self, inputFile):	#Load halma board from file
+
+
+	def loadFromFile(self, inputFile):
 		j = 0
 		self.counter = 0
-		fileID = open(inputFile, 'r')	#Open file to read
-		for i in range(self.dim):		#Add pieces to board based on characters received from file
+		fileID = open(inputFile, 'r')
+		for i in range(self.dim):
 			row = fileID.readline().split( )
 			for letter in row:
-				if letter == 'X':		#Add red piece
+				if letter == 'X':
 					self.board.append(['X', self.createButton(i, j, "red"), self.counter])
 
-				elif letter == 'O':		#Add green piece
+				elif letter == 'O':
 					self.board.append(['O', self.createButton(i, j, "green"), self.counter])
 
-				elif letter == '_':		#Add empty space
+				elif letter == '_':
 					self.board.append([' ', self.createButton(i, j, ""), self.counter])
 				self.counter += 1
 				j += 1
 			j = 0
-		fileID.close()					#Close file
-		self.createWinRegions()			#Draw win regions, or territory boundaries
+		fileID.close()
+		self.createWinRegions()
 	
-	def addLabels(self):	#Add labels (1, 2, 3...) and (a, b, c, ...)
+	def addLabels(self):
 		for i in range(self.dim):
 			Label(self.buttonContainer, text = i + 1, justify = CENTER)\
 			.grid(row = i + 1, column = self.dim + 1, ipadx = 5, ipady = 5, padx = 0, pady = 2)
@@ -276,47 +318,42 @@ class HalmaGUI:
 			Label(self.buttonContainer, text = chr(i + 1 + 96), justify = CENTER)\
 			.grid(row = self.dim + 2, column = i, ipadx = 5, ipady = 5, padx = 0, pady = 2)
 	
-	def saveToFile(self, inputModal, outputFile):	#Save board to specified file
+	def saveToFile(self, inputModal, outputFile):
 		i = 0
-		fileID = open(outputFile, 'w')	#Open file to write to
-		for position in self.board:		#Go through board array, and print corresponding values to file
-			if position[0] == ' ':		#Blank spaces are denoted as "_"
+		fileID = open(outputFile, 'w')
+		for position in self.board:
+			if position[0] == ' ':
 				fileID.write("_")
 			elif position[0] == 'X':
 				fileID.write("X")
 			elif position[0] == 'O':
 				fileID.write("O")
 			
-			if i + 1 == self.dim:		#New line for each row
+			if i + 1 == self.dim:
 				i = -1
 				fileID.write("\n")
-			else:						#Space between columns
+			else:
 				fileID.write(" ")
 			i += 1
-		fileID.close()					#Close file written to
+		fileID.close()
 		print("Saved board to: " + outputFile)
-		self.quitModal(inputModal)		#Quit save modal
+		self.quitModal(inputModal)
 			
-	def saveModal(self):	#Spawn save modal for user to utilize
-		saveModal = Toplevel()	#Put modal on top level
+	def saveModal(self):
+		saveModal = Toplevel()
 		
-		#Prompt user to input save file location
 		label = Label(saveModal, text = "File to save: ", justify = LEFT, relief = RIDGE, width = 25)
 		label.grid(row = 0, column = 0, pady = 5)
 		
-		#Create text field for user to put file location in
 		entry = Entry(saveModal, justify = LEFT, relief = RIDGE, width = 25)
 		entry.grid(row = 0, column = 1, pady = 5)
 		
-		#Save board to specified file location and quit
 		tkinter.Button(saveModal, text = "SAVE", command = lambda: self.saveToFile(saveModal, entry.get()), relief = GROOVE)\
 			.grid(row = 1, column = 0, ipadx = 15, ipady = 3, pady = 5)
-		
-		#Quit save modal
+			
 		tkinter.Button(saveModal, text = "CANCEL", command = lambda: self.quitModal(saveModal), relief = GROOVE)\
 			.grid(row = 1, column = 1, ipadx = 15, ipady = 3, pady = 5)
 		
-		#Initialize saveModal
 		saveModal.transient(self.screen)
 		saveModal.grab_set()
 		self.screen.wait_window(saveModal)
@@ -324,10 +361,10 @@ class HalmaGUI:
 	def createWinRegions(self):
 		#Y start = 45, increment 45
 		#X start = 46, increment 46
-		for i in range(0, self.dim//2):		#Draw bottom left zone
+		for i in range(0, self.dim//2):	#Draw upper left zone
 			self.buttonContainer.create_line(46*i, 45*(self.dim/2 + i), 46*(i + 1), 45*(self.dim/2 + i), width = 4)
 			self.buttonContainer.create_line(46*(i + 1), 45*(self.dim/2 + i), 46*(i + 1), 45*(self.dim/2 + i + 1), width = 4)
-		for i in range(0, self.dim//2):		#Draw upper right zone
+		for i in range(0, self.dim//2):	#Draw bottom right zone
 			self.buttonContainer.create_line(46*(self.dim - i), 45*(self.dim/2 - i), 46*(self.dim - i - 1), 45*(self.dim/2 - i), width = 4)
 			self.buttonContainer.create_line(46*(self.dim - i - 1), 45*(self.dim/2 - i), 46*(self.dim - i - 1), 45*(self.dim/2 - i - 1), width = 4)
 		
@@ -370,19 +407,15 @@ class HalmaGUI:
 					self.statusText.set("That space is currently occupied")
 				else:				#If space is empty, move selected piece to that location!
 					self.moveSelectedPiece(piece)
-					#Query computer for a move on its turn
-					if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green"):
-						self.statusText.set("The computer is thinking...")
-						self.screen.after(500, self.computer.calculateMove)
 		self.refreshBoard()			#Update board to show changes
 	
-	def resetLabel(self):	#Generic text to guide user to action
+	def resetLabel(self):
 		self.statusText.set("Select a piece to move")
 	
 	def moveSelectedPiece(self, piece):	#Moves selectedPiece to the given piece location
 		# generate valid move positions for this piece, and
 		self.valMovesSelect = self.getValidMoves(self.selectedPiece[2])
-		# if the location it wants to move to is in the list of valid moves, and no territory conflicts arise
+		# if the location it wants to move to is in the list of valid moves
 		if self.indiceToCoord(piece[2]) in self.valMovesSelect[self.indiceToCoord(self.selectedPiece[2])]:
 			# and the piece selected belongs to the player whos turn it is
 			if self.selectedPiece[0] == self.playerTurn:
@@ -397,14 +430,15 @@ class HalmaGUI:
 					self.statusText.set("A piece has been moved! ("\
 						+ str(self.movedPieces[1][2]//self.dim + 1) + "," + chr(self.movedPieces[1][2]%self.dim + 97) + ")->("\
 						+ str(self.movedPieces[0][2]//self.dim + 1) + "," + chr(self.movedPieces[0][2]%self.dim + 97) + ")")
+					self.screen.after(2000, self.resetLabel)
 				# Update self.playerTurn to be the opponents turn
 				if self.playerTurn == "O":
 					self.playerTurn = "X"
 				else:
 					self.playerTurn = "O"
-				
 			else:# update label to say it is not that players turn
 				self.statusText.set("It is not your turn to move!")
+				self.screen.after(2000, self.resetLabel)
 		else:
 			# player has selected correct piece for their turn, but has selected an invalid spot to move to
 			if self.selectedPiece[0] == self.playerTurn:
@@ -412,34 +446,18 @@ class HalmaGUI:
 				self.statusText.set("Not a valid move ("\
 					+ str(self.selectedPiece[2]//self.dim + 1) + "," + chr(self.selectedPiece[2]%self.dim + 97) + ")->("\
 					+ str(piece[2]//self.dim + 1) + "," + chr(piece[2]%self.dim + 97) + ")")
+				self.screen.after(2000, self.resetLabel)
 
 			# player has selected the wrong piece for their turn, tell them its the other players turn to move.
 			else:
 				self.statusText.set("It is not your turn to move!")
-	
-	def territoryConflict(self, start, end):	#Checks to see if a player is trying an illegal move concerning territories
-		#If green is in enemy territory, it cannot move back out
-		if start[0] == 'O' and self.inTopRight(start[2]//self.dim, start[2]%self.dim):
-			if not self.inTopRight(end[2]//self.dim, end[2]%self.dim):
-				return True
-		#If green is outside of its home territory, it may not move back
-		elif start[0] == 'O' and not self.inBottomLeft(start[2]//self.dim, start[2]%self.dim):
-			if self.inBottomLeft(end[2]//self.dim, end[2]%self.dim):
-				return True
-		#Same rules as above, except for red
-		if start[0] == 'X' and self.inBottomLeft(start[2]//self.dim, start[2]%self.dim):
-			if not self.inBottomLeft(end[2]//self.dim, end[2]%self.dim):
-				return True
-		elif start[0] == 'X' and not self.inTopRight(start[2]//self.dim, start[2]%self.dim):
-			if self.inTopRight(end[2]//self.dim, end[2]%self.dim):
-				return True
-			
-	
+				self.screen.after(2000, self.resetLabel)
+
 	def refreshBoard(self):	#Updates halma piece positions, and visuals
 		for piece in self.board:	#Clear board
 			piece[1].delete("all")
 		
-		if self.selectedPiece != None:	#Mark selected pieces with blue rectangle
+		if self.selectedPiece != None:	#Mark selected pieces with red rectangle
 			self.selectedPiece[1].create_rectangle(0, 0, 36, 35, fill = "blue", outline = "blue")
 			
 		if self.movedPieces[0] != None and self.movedPieces[1] != None:	#Mark spaces involving movement with yellow rectangle
@@ -452,27 +470,27 @@ class HalmaGUI:
 			if piece[0] == 'O':
 				piece[1].create_oval(7, 7, 33, 33, fill = "green", outline = "green")
 	
-	def gameWon(self):	#Detects if a side wins
+	def gameWon(self):
 		winnerO = True
 		winnerX = True
 		for i in range(self.dim):
 			for j in range(self.dim):
-				if(self.inTopRight(i, j)):		#If top right corner isn't filled with green, green does not win
+				if(self.inTopRight(i, j)):		#If top right corner, create button with red piece
 					if self.board[i * self.dim + j][0] != 'O':
 						winnerO = False
-				elif(self.inBottomLeft(i, j)):	#If bottom left corner isn't filled with red, red does not win
+				elif(self.inBottomLeft(i, j)):	#If bottom left, create button with green piece
 					if self.board[i * self.dim + j][0] != 'X':
 						winnerX = False
-		if winnerO and winnerX:		#If both sides win, be very confused
+		if winnerO and winnerX:
 			self.statusText.set("Both sides won...somehow")
 			return True
-		elif winnerX:				#If red team wins, update status with good news
+		elif winnerX:
 			self.statusText.set("Team Red Wins!")
 			return True
-		elif winnerO:				#If green team wins, update status with good news
+		elif winnerO:
 			self.statusText.set("Team Green Wins!")
 			return True
-		else:						#If no teams win, return false
+		else:
 			return False
 	
 	def inTopRight(self, i, j):	#Checks to see if a piece is in the top right of the board
@@ -487,11 +505,11 @@ class HalmaGUI:
 		else:
 			return False
 	
-	def disableBoard(self):			#Disables game board buttons
+	def disableBoard(self):
 		for button in self.board:
 			button[1].bind("<ButtonPress-1>", self.push)
 	
-	def quitModal(self, inputModal):	#Quits a modal
+	def quitModal(self, inputModal):
 		inputModal.destroy()
 	
 	def quit(self):	#Quit GUI
@@ -499,17 +517,13 @@ class HalmaGUI:
 
 
 screen = tkinter.Tk(className = "Halma GUI")	#Create window for GUI
-if len(sys.argv) == 4:
-	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[3], None)	#Create HalmaGUI object, pass in window and dimensions
-	theMind = ProjectTBD(theGUI, int(sys.argv[2]), sys.argv[3])
-	theGUI.configureComputer(theMind)
-elif len(sys.argv) == 5:
-	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[3], sys.argv[4])	#Create HalmaGUI object, pass in window, dimensions, and input file
-	theMind = ProjectTBD(theGUI, int(sys.argv[2]), sys.argv[3])
-	theGUI.configureComputer(theMind)
+if len(sys.argv) == 2:
+	theGUI = HalmaGUI(screen, int(sys.argv[1]), None)	#Create HalmaGUI object, pass in window and dimensions
+elif len(sys.argv) == 3:
+	theGUI = HalmaGUI(screen, int(sys.argv[1]), sys.argv[2])	#Create HalmaGUI object, pass in window, dimensions, and input file
 else:
 	print ("""You must run the program with one of two commands:
-	1. python halmaBoard.py dimensions time_limit computer_player
-	2. python halmaBoard.py dimensions time_limit computer_player inputFile.txt""")
+	1. python halmaBoard.py dimensions
+	2. python halmaBoard.py dimensions inputFile.txt""")
 	sys.exit()
 screen.mainloop()	#Run GUI
