@@ -21,6 +21,7 @@ class ProjectTBD:
 		numPly = 1
 		
 		board = self.GUI.genSimpleBoard()
+		print(self.heuristicOfBoard(board))
 		possibleMoves = self.genMoves(board, self.color)
 		
 		self.chosenPiece = random.choice(list(possibleMoves.items()))
@@ -45,7 +46,43 @@ class ProjectTBD:
 	def minimax(self, possibleMoves, board, numPly):
 		pass
 	
-	def makeTestMove(self, start, end, board):
+	def heuristicOfBoard(self, board):
+		redCorner = self.GUI.dim-1					#this is the farthest corner in the red base
+		redCornerCoord = self.GUI.indiceToCoord(redCorner)
+		grnCorner = (self.GUI.dim*(self.GUI.dim-1))	#this is the farthest corner in the grn base
+		grnCornerCoord = self.GUI.indiceToCoord(grnCorner)
+		totalStraightLineDistance = 0
+		
+		for i in range(self.GUI.dim):	#Find distance of each computer piece from opposite corner
+			for j in range(self.GUI.dim):
+				if board[self.GUI.coordToIndice((i, j))] == 'O' and self.color == "green":
+					totalStraightLineDistance += self.heuristicVal((i,j), redCornerCoord)
+				elif board[self.GUI.coordToIndice((i, j))] == 'X' and self.color == "red":
+					totalStraightLineDistance += self.heuristicVal((i,j), grnCornerCoord)
+		return -totalStraightLineDistance
+		
+	def heuristicVal(self, pos, newPos):
+		redCorner = self.GUI.dim-1					#this is the farthest corner in the red base
+		redCornerCoord = self.GUI.indiceToCoord(redCorner)
+		grnCorner = (self.GUI.dim*(self.GUI.dim-1))	#this is the farthest corner in the grn base
+		grnCornerCoord = self.GUI.indiceToCoord(grnCorner)
+
+		if self.color == "green":
+			posDist = int(((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2))
+			newPosDist = int(((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2))
+		else:
+			#distance between two points = sqrt((Ynew - Yold)^2+(Xnew-Xold)^2)
+			posDist = int(((grnCornerCoord[1]-pos[1])**2+(grnCornerCoord[0]-pos[0])**2)**(1/2))
+			# then find distance between the potential spot we want to move to, and the green corner
+			newPosDist = int(((grnCornerCoord[1]-newPos[1])**2+(grnCornerCoord[0]-newPos[0])**2)**(1/2))
+			
+		# this is a positive or negative value depending on if were moving towards the enemy corner or away from it
+		delta = posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
+		# some helper print statements to see what is going on.
+		print(pos, "to", newPos, " distance: ", delta)
+		return delta
+	
+	def makeTempMove(self, start, end, board):
 		pieceToMove = board[start]
 		board[start] = ' '
 		board[end] = pieceToMove
