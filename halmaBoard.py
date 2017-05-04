@@ -50,7 +50,7 @@ class HalmaGUI:
 		tkinter.Button(screen, text="Indice Text", command=self.printindice, relief=GROOVE) \
 			.grid(row=6, column=0, ipadx=15, ipady=3, pady=5)
 		"""
-		tkinter.Button(screen, text="hueristictest", command=self.heuristicVal, relief=GROOVE) \
+		tkinter.Button(screen, text="hueristictest", command=self.heurCall, relief=GROOVE) \
 			.grid(row=4, column=0, ipadx=15, ipady=3, pady=5)
 
 	def createBoard(self):
@@ -71,37 +71,43 @@ class HalmaGUI:
 				self.counter += 1
 		self.createWinRegions()
 
-	"""For hueristicVal, it should take in the board you want to check, a piece you want to move,
-	   and the position you want to move the pice too
 
-	   For now though, parameters will be empty for button testing"""
-	def heuristicVal(self):
+
+	def heurCall(self):
+		# stores dictionary of valid moves for red team
+		self.redMoves = self.genMovesRed()  # stores valid moves for red player
+
+		self.redPieces = list(self.redMoves)  # stores all the keys in the valid red moves dictionary in a list
+
+		# coord of original piece we want to move
+		self.redX = self.redPieces[0][0] #X-coordinate of first key in dictionary
+		self.redY = self.redPieces[0][1] #Y-coordinate of first key in dictionary
+		self.redCoord = (self.redX, self.redY)
+
+		# coord of a position we want to move to
+		value = self.redMoves[self.redPieces[0]]
+		newX = value[0][0]
+		newY = value[0][1]
+		newCoord = (newX, newY)
+
+		self.aHeurVal = self.heuristicVal(self.redCoord, newCoord)
+
+		return self.aHeurVal
+
+
+	def heuristicVal(self, pos, newPos):
 		self.redCorner = self.dim-1					#this is the farthest corner in the red base
 		self.redCornerCoord = self.indiceToCoord(self.redCorner)
 		self.grnCorner = (self.dim*(self.dim-1))	#this is the farthest corner in the grn base
 		self.grnCornerCoord = self.indiceToCoord(self.grnCorner)
 
-		# stores dictionary of valid moves for red team
-		self.redMoves = self.genMovesRed() #stores valid moves for red player
-
-		self.redPieces = list(self.redMoves)# stores all the keys in the valid red moves dictionary in a list
-		# if red piece, calc is slightly different/ direction you want to go is different
 
 		#distance between two points = sqrt((Ynew - Yold)^2+(Xnew-Xold)^2)
+		self.posDist = int(((self.grnCornerCoord[1]-pos[1])**2+(self.grnCornerCoord[0]-pos[0])**2)**(1/2))
 
-		#first find distance between the piece we want to move, and the enemy corner
-		self.redX = self.redPieces[0][0] #X-coordinate of first key in dictionary
-		self.redY = self.redPieces[0][1] #Y-coordinate of first key in dictionary
-		self.posDist = int(((self.grnCornerCoord[1]-self.redY)**2+(self.grnCornerCoord[0]-self.redX)**2)**(1/2))
+		# then find distance between the potential spot we want to move to, and the green corner
+		newPosDist = int(((self.grnCornerCoord[1]-newPos[1])**2+(self.grnCornerCoord[0]-newPos[0])**2)**(1/2))
 
-
-
-		#then find distance between the potential spot we want to move to (testing on first key value pair), and the green corner
-		value = self.redMoves[self.redPieces[0]]
-		newX = value[0][0]
-		newY = value[0][1]
-
-		newPosDist = int(((self.grnCornerCoord[1]-newY)**2+(self.grnCornerCoord[0]-newX)**2)**(1/2))
 		#print("original dist: ", self.posDist)
 		#print("new dist: ", newPosDist)
 
@@ -109,12 +115,9 @@ class HalmaGUI:
 		self.delta = self.posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
 
 		# some helper print statements to see what is going on.
-		print((self.redX,self.redY), "to",(newX, newY), "goodness: ", self.delta)
+		print(pos, "to", newPos, "goodness: ", self.delta)
 
-		if self.delta > 0:
-			return (self.delta)
-		else:
-			return (self.delta)
+		return (self.delta)
 
 
 		# return (x,y) to (x,y), goodness: Value
