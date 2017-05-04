@@ -66,7 +66,7 @@ class ProjectTBD:
 				boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
 				delta = self.heuristicVal(piece, move)
 				#Get moves returned from minimax
-				movesScore.append([self.minimum(boardCopy, numPly, heuristicScore + delta, piece, move])
+				movesScore.append([self.minimum(boardCopy, numPly, heuristicScore + delta), piece, move])
 		for element in movesScore:		#Find best move
 			if bestMove[0] < element[0]:
 				bestMove = element
@@ -84,7 +84,7 @@ class ProjectTBD:
 				boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
 				delta = self.heuristicVal(piece, move)
 				#Get moves returned from maxmimum
-				movesScore.append([self.maximum(boardCopy, numPly + 1, heuristicScore + delta, piece, move])
+				movesScore.append([self.maximum(boardCopy, numPly + 1, heuristicScore + delta), piece, move])
 		for element in movesScore:		#Find worst move
 			if worstMove[0] > element[0]:
 				worstMove = element;
