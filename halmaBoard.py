@@ -452,6 +452,12 @@ class HalmaGUI:
 			if piece[0] == 'O':
 				piece[1].create_oval(7, 7, 33, 33, fill = "green", outline = "green")
 	
+	def genSimpleBoard(self):
+		simpleBoard = []
+		for piece in self.board:
+			simpleBoard.append(piece[0])
+		return simpleBoard
+	
 	def gameWon(self):	#Detects if a side wins
 		winnerO = True
 		winnerX = True
