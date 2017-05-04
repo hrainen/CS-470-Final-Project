@@ -8,6 +8,7 @@ class ProjectTBD:
 	def __init__(self, GUI, time, color):
 		self.GUI = GUI
 		self.color = color
+		self.plyLimit = 0
 		if self.color == "green":
 			self.enemyColor = "red"
 		else:
@@ -16,37 +17,75 @@ class ProjectTBD:
 		self.chosenPiece = [(0,0),[]]
 		self.chosenMove = (0,0)
 		
-	def calculateMove(self):
+	def calculateMove(self):	#This function activates minimax in the first place
 		start = time.time()
 		numPly = 1
 		
 		board = self.GUI.genSimpleBoard()
-		print(self.heuristicOfBoard(board))
-		possibleMoves = self.genMoves(board, self.color)
-		
-		self.chosenPiece = random.choice(list(possibleMoves.items()))
-		self.chosenMove = random.choice(list(self.chosenPiece[1]))
+		#print(self.heuristicOfBoard(board))
+		possibleMoves = self.genMoves(board, self.color)	#Select a random starting move, in case something goes wrong with minimax
+		if possibleMoves != []:
+			self.chosenPiece = random.choice(list(possibleMoves.items()))
+			if self.chosenPiece != [] and self.chosenPiece[1] != []:
+				self.chosenMove = random.choice(list(self.chosenPiece[1]))
+				self.chosenPiece = self.chosenPiece[0]
 			
 		while(True):
-			if time.time() - start > self.time/2:
+			if time.time() - start > self.time/6:
+				print("Next move computed in %f seconds" % (time.time() - start))
 				self.makeMove()
 				break
-			#chosenPair = self.minimax(possibleMoves, board, numPly)
-			#self.chosenPiece = chosenPair[0]
-			#self.chosenMove = chosenPair[1]
-			numPly += 1
+			chosenPair = self.minimax(board, numPly)
+			self.chosenPiece = chosenPair[0]
+			self.chosenMove = chosenPair[1]
+			print("Ply %d reached" % numPly)
+			#numPly += 1
 		
-	def makeMove(self):
+	def makeMove(self):	#Makes the final move decided by the computer
 		print("Time's up!")
-		self.GUI.selectedPiece = self.GUI.board[self.GUI.coordToIndice(self.chosenPiece[0])]
+		self.GUI.selectedPiece = self.GUI.board[self.GUI.coordToIndice(self.chosenPiece)]
 		self.GUI.moveSelectedPiece(self.GUI.board[self.GUI.coordToIndice(self.chosenMove)])
 		
 		self.GUI.refreshBoard()
 		
-	def minimax(self, possibleMoves, board, numPly):
-		pass
+	def minimax(self, board, numPly):	#This gets the whole max/min tree running
+		self.plyLimit = numPly			#Set ply limit for maximum to use
+		result = self.maximum(board, 0)	#Give maximum the current board, set current ply to 0
+		return [result[1], result[2]]	#Return movement results
+		
+	def maximum(self, board, numPly):	#Maximum node of tree
+		movesScore = []					#Holds all moves returned from minimum functions
+		bestMove = [-999, None, None]	#Holds the best move
+		if numPly >= self.plyLimit:		#If plyLimit matched or exceeded, return current board value
+			return self.heuristicOfBoard(board)
+		possibleMoves = self.genMoves(board, self.color)	#If not, get all possible friendly moves
+		for piece,moves in possibleMoves.items():			#Iterate through these moves, and send new board states to minimax
+			for move in moves:
+				boardCopy = board[:]	#Create copy of board
+				boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
+				movesScore.append([self.minimum(boardCopy, numPly), piece, move])	#Get moves returned from minimax
+		for element in movesScore:		#Find best move
+			if bestMove[0] < element[0]:
+				bestMove = element
+		if numPly == 0:					#If this is the root node, return all the details of the best move
+			return bestMove
+		return bestMove[0]				#If this is not a root node, a simple board value is sufficient
 	
-	def heuristicOfBoard(self, board):
+	def minimum(self, board, numPly):	#Minimum node of tree
+		movesScore = []					#Holds all moves returned from maximum functions
+		worstMove = [0, None, None]		#Holds the worst move for computer
+		possibleMoves = self.genMoves(board, self.enemyColor)	#Get all possible enemy moves
+		for piece,moves in possibleMoves.items():	#Iterates through all moves, and sends new board states to maximum
+			for move in moves:
+				boardCopy = board[:]	#Copy of board
+				boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
+				movesScore.append([self.maximum(boardCopy, numPly + 1), piece, move])	#Get moves returned from maxmimum
+		for element in movesScore:		#Find worst move
+			if worstMove[0] > element[0]:
+				worstMove = element;
+		return worstMove[0]				#Return worst move value
+	
+	def heuristicOfBoard(self, board):	#Returns heuristic value of entire board
 		redCorner = self.GUI.dim-1					#this is the farthest corner in the red base
 		redCornerCoord = self.GUI.indiceToCoord(redCorner)
 		grnCorner = (self.GUI.dim*(self.GUI.dim-1))	#this is the farthest corner in the grn base
@@ -79,10 +118,10 @@ class ProjectTBD:
 		# this is a positive or negative value depending on if were moving towards the enemy corner or away from it
 		delta = posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
 		# some helper print statements to see what is going on.
-		print(pos, "to", newPos, " distance: ", delta)
+		#print(pos, "to", newPos, " distance: ", delta)
 		return delta
 	
-	def makeTempMove(self, start, end, board):
+	def makeTempMove(self, start, end, board):	#Alter temporary board state based on move specified by start and end
 		pieceToMove = board[start]
 		board[start] = ' '
 		board[end] = pieceToMove
