@@ -31,7 +31,7 @@ class ProjectTBD:
 				self.chosenPiece = self.chosenPiece[0]
 			
 		while(True):
-			if time.time() - start > self.time/6:
+			if time.time() - start > self.time/2 or numPly >= 3:
 				print("Next move computed in %f seconds" % (time.time() - start))
 				self.makeMove()
 				break
@@ -62,9 +62,12 @@ class ProjectTBD:
 		possibleMoves = self.genMoves(board, self.color)	#If not, get all possible friendly moves
 		for piece,moves in possibleMoves.items():			#Iterate through these moves, and send new board states to minimax
 			for move in moves:
+				delta = self.heuristicVal(piece, move)		#FORWARD PRUNING
+				if delta < 0:
+					continue
 				boardCopy = board[:]	#Create copy of board
 				boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
-				delta = self.heuristicVal(piece, move)
+				
 				#Get moves returned from minimax
 				movesScore.append([self.minimum(boardCopy, numPly, heuristicScore + delta), piece, move])
 		for element in movesScore:		#Find best move
@@ -80,9 +83,12 @@ class ProjectTBD:
 		possibleMoves = self.genMoves(board, self.enemyColor)	#Get all possible enemy moves
 		for piece,moves in possibleMoves.items():	#Iterates through all moves, and sends new board states to maximum
 			for move in moves:
+				delta = self.heuristicVal(piece, move)	#FORWARD PRUNING
+				if delta > 0:
+					continue
 				boardCopy = board[:]	#Copy of board
 				boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
-				delta = self.heuristicVal(piece, move)
+				
 				#Get moves returned from maxmimum
 				movesScore.append([self.maximum(boardCopy, numPly + 1, heuristicScore + delta), piece, move])
 		for element in movesScore:		#Find worst move
