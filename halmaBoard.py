@@ -12,6 +12,7 @@ class HalmaGUI:
 		self.selectedPiece = None	#This will hold a selected piece
 		self.movedPieces = [None, None]		#This holds recently moved positions
 		self.computer = None
+		self.continueComp = True
 		self.computerColor = computerColor
 		self.dim = dim						#Holds board dimensions
 		self.statusText = StringVar()	#This is the status text at the top of the GUI
@@ -55,7 +56,8 @@ class HalmaGUI:
 	def configureComputer(self, computer):	#Puts computer AI into global variable
 		self.computer = computer
 		#Query computer for a move on its turn
-		if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green"):
+		if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green")\
+			and self.continueComp:
 			self.statusText.set("The computer is thinking...")
 			self.screen.after(500, self.computer.calculateMove)
 		
@@ -371,7 +373,8 @@ class HalmaGUI:
 				else:				#If space is empty, move selected piece to that location!
 					self.moveSelectedPiece(piece)
 					#Query computer for a move on its turn
-					if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green"):
+					if (self.playerTurn == "O" and self.computer.color == "green") or (self.playerTurn == "X" and self.computer.color != "green")\
+						and self.continueComp:
 						self.statusText.set("The computer is thinking...")
 						self.screen.after(500, self.computer.calculateMove)
 		self.refreshBoard()			#Update board to show changes
@@ -496,6 +499,7 @@ class HalmaGUI:
 	def disableBoard(self):			#Disables game board buttons
 		for button in self.board:
 			button[1].bind("<ButtonPress-1>", self.push)
+		self.continueComp = False
 	
 	def quitModal(self, inputModal):	#Quits a modal
 		inputModal.destroy()
