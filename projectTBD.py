@@ -10,6 +10,10 @@ class ProjectTBD:
 		self.color = color
 		self.plyLimit = 0
 		self.start = 0
+		self.nodesQueued = 0
+		self.nodesExplored = 0
+		self.boardStatesEvaluated = 0
+		self.doAlphaBeta = True
 		if self.color == "green":
 			self.enemyColor = "red"
 		else:
@@ -17,7 +21,12 @@ class ProjectTBD:
 		self.time = time
 		self.chosenPiece = [(0,0),[]]
 		self.chosenMove = (0,0)
-		
+	
+	def resetData(self):
+		self.nodesQueued = 0
+		self.nodesExplored = 0
+		self.boardStatesEvaluated = 0
+	
 	def calculateMove(self):	#This function activates minimax in the first place
 		self.start = time.time()
 		numPly = 1
@@ -33,7 +42,9 @@ class ProjectTBD:
 			
 		while(True):
 			if time.time() - self.start > self.time - 1:	#Once time has run out, make the selected move
-				print("Next move computed in %f seconds" % (time.time() - self.start))
+				print("Time's up!")
+				print("Move computed in %f seconds" % (time.time() - self.start))
+				print("\n~~~~~~~~~~~~~~~~~~~~~~\n")
 				self.makeMove()
 				break
 			chosenPair = self.minimax(board, numPly)
@@ -41,10 +52,13 @@ class ProjectTBD:
 				self.chosenPiece = chosenPair[0]
 				self.chosenMove = chosenPair[1]
 				print("Ply %d reached" % numPly)
+				print("%d explored nodes" % self.nodesExplored)
+				print("%d nodes pruned (%.1f%%)" % (self.nodesQueued - self.nodesExplored, 100 - 100.0*self.nodesExplored/self.nodesQueued))
+				print("%d calculated board states\n" % self.boardStatesEvaluated)
+				self.resetData()
 				numPly += 1
 		
 	def makeMove(self):	#Makes the final move decided by the computer
-		print("Time's up!")
 		self.GUI.selectedPiece = self.GUI.board[self.GUI.coordToIndice(self.chosenPiece)]
 		self.GUI.moveSelectedPiece(self.GUI.board[self.GUI.coordToIndice(self.chosenMove)])
 		
@@ -57,13 +71,21 @@ class ProjectTBD:
 
 		self.plyLimit = numPly			#Set ply limit for maximum to use
 		heuristicScore = self.heuristicOfBoard(board)
+		self.nodesQueued += 1
 		result = self.alphaBeta(board, 0, alpha, beta, True, heuristicScore)	#Give maximum the current board, set current ply to 0
+		
 		if result[0] == 10000000:		#If time ran out during execution, return None
 			return None
 		return [result[1], result[2]]	#Return movement results
-	
+		
+	def getNumberOfNodesQueued(self, possibleMoves):
+		for piece,moves in possibleMoves.items():
+			self.nodesQueued += len(moves)
+		
 	def alphaBeta(self, board, depth, alpha, beta, maximizingPlayer, heuristicScore):
+		self.nodesExplored += 1
 		if depth >= self.plyLimit:	#Base case. If ply limit reached, return current heuristicScore
+			self.boardStatesEvaluated += 1
 			return heuristicScore
 		
 		if time.time() - self.start > self.time - 1:
@@ -74,6 +96,7 @@ class ProjectTBD:
 		if maximizingPlayer:
 			bestMove = [-999, None, None]	#Holds the best move  ("v = -inf")
 			possibleMoves = self.genMoves(board, self.color)	#If not, get all possible friendly moves
+			self.getNumberOfNodesQueued(possibleMoves)
 			for piece,moves in possibleMoves.items():			#Iterate through these moves, and send new board states to minimax
 				for move in moves:
 					delta = self.heuristicVal(piece, move)		#FORWARD PRUNING
@@ -94,7 +117,7 @@ class ProjectTBD:
 						bestMove = tempMove
 						
 					alpha = max(alpha, tempMove[0])	#If current heuristic is larger than alpha, replace alpha
-					if beta <= alpha:				#If alpha is ever greater than beta, ignore all other branches, return current best move
+					if beta <= alpha and self.doAlphaBeta:	#If alpha is ever greater than beta, ignore all other branches, return current best move
 						if depth == 0:					#If this is the root node, return all the details of the best move ("v")
 							return bestMove				#The return BREAKS from loop by quitting function
 						return bestMove[0]				#If this is not a root node, a simple board value is sufficient	("v[0]")
@@ -106,6 +129,7 @@ class ProjectTBD:
 			worstMove = 0		#Holds the worst move heuristic for computer ("v = inf")
 
 			possibleMoves = self.genMoves(board, self.enemyColor)	#Get all possible enemy moves
+			self.getNumberOfNodesQueued(possibleMoves)
 			for piece,moves in possibleMoves.items():	#Iterates through all moves, and sends new board states to maximum
 				for move in moves:
 					delta = self.heuristicVal(piece, move)	#FORWARD PRUNING
@@ -124,7 +148,7 @@ class ProjectTBD:
 						worstMove = tempMove
 					
 					beta = min(beta, tempMove)	#Get new beta value if a smaller heuristic (than beta) is found
-					if beta <= alpha:			#If the beta value ever gets lower than alpha, prune all other branches
+					if beta <= alpha and self.doAlphaBeta:	#If the beta value ever gets lower than alpha, prune all other branches
 						return worstMove		#Return current worst heuristic ("v")
 												#The return BREAKS from loop by quitting function
 			return worstMove				#Return worst heuristic
