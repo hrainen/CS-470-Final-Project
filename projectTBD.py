@@ -55,60 +55,60 @@ class ProjectTBD:
 
 		self.plyLimit = numPly			#Set ply limit for maximum to use
 		heuristicScore = self.heuristicOfBoard(board)
-		result = self.maximum(board, 0, heuristicScore, alpha, beta)	#Give maximum the current board, set current ply to 0
+		result = self.alphaBeta(board, 0, alpha, beta, True, heuristicScore)	#Give maximum the current board, set current ply to 0
 		return [result[1], result[2]]	#Return movement results
-		
-	def maximum(self, board, numPly, heuristicScore, alpha, beta):	#Maximum node of tree
-		movesScore = []					#Holds all moves returned from minimum functions
-		bestMove = [-999, None, None]	#Holds the best move
-		if numPly >= self.plyLimit:		#If plyLimit matched or exceeded, return current board value
-			return heuristicScore
-		possibleMoves = self.genMoves(board, self.color)	#If not, get all possible friendly moves
-		for piece,moves in possibleMoves.items():			#Iterate through these moves, and send new board states to minimax
-			for move in moves:
-				delta = self.heuristicVal(piece, move)		#FORWARD PRUNING
-				if delta < 0:
-					continue
-				boardCopy = board[:]	#Create copy of board
-				boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
-				
-				#Get moves returned from minimax, store largest heuristic received
-				tempMove = [self.minimum(boardCopy, numPly, heuristicScore + delta, alpha, beta), piece, move]
-				if tempMove[0] > bestMove[0]:
-					bestMove = tempMove
-					
-				alpha = max(alpha, tempMove[0])	#If current heuristic is larger than alpha, replace alpha
-				if alpha >= beta:				#If alpha is ever greater than beta, ignore all other branches, return current best move
-					if numPly == 0:					#If this is the root node, return all the details of the best move
-						return bestMove
-					return bestMove[0]				#If this is not a root node, a simple board value is sufficient
-				
-		if numPly == 0:					#If this is the root node, return all the details of the best move
-			return bestMove
-		return bestMove[0]				#If this is not a root node, a simple board value is sufficient
 	
-	def minimum(self, board, numPly, heuristicScore, alpha, beta):	#Minimum node of tree
-		worstMove = 0		#Holds the worst move heuristic for computer
-
-		possibleMoves = self.genMoves(board, self.enemyColor)	#Get all possible enemy moves
-		for piece,moves in possibleMoves.items():	#Iterates through all moves, and sends new board states to maximum
-			for move in moves:
-				delta = self.heuristicVal(piece, move)	#FORWARD PRUNING
-				if delta > 0:
-					continue
-				boardCopy = board[:]	#Copy of board
-				boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
-				
-				#Get moves returned from maxmimum, store move with smallest heuristic
-				tempMove = self.maximum(boardCopy, numPly + 1, heuristicScore + delta, alpha, beta)
-				if tempMove < worstMove:
-					worstMove = tempMove
-				
-				beta = min(beta, tempMove)	#Get new beta value if a smaller heuristic (than beta) is found
-				if alpha >= beta:			#If the beta value ever gets lower than alpha, prune all other branches
-					return worstMove		#Return current worst heuristic
+	def alphaBeta(self, board, depth, alpha, beta, maximizingPlayer, heuristicScore):
+		if depth >= self.plyLimit:	#Base case. If ply limit reached, return current heuristicScore
+			return heuristicScore
 		
-		return worstMove				#Return worst heuristic
+		if maximizingPlayer:
+			bestMove = [-999, None, None]	#Holds the best move  ("v = -inf")
+			possibleMoves = self.genMoves(board, self.color)	#If not, get all possible friendly moves
+			for piece,moves in possibleMoves.items():			#Iterate through these moves, and send new board states to minimax
+				for move in moves:
+					delta = self.heuristicVal(piece, move)		#FORWARD PRUNING
+					if delta < 0:
+						continue
+					boardCopy = board[:]	#Create copy of board
+					boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
+					
+					#Get moves returned from minimum node, store largest heuristic received, tempMove is essentially "v"
+					tempMove = [self.alphaBeta(boardCopy, depth, alpha, beta, False, heuristicScore + delta), piece, move]
+					if tempMove[0] > bestMove[0]:	#This is essentially: v := max(v, alphabeta(child...)) on the wiki
+						bestMove = tempMove
+						
+					alpha = max(alpha, tempMove[0])	#If current heuristic is larger than alpha, replace alpha
+					if beta <= alpha:				#If alpha is ever greater than beta, ignore all other branches, return current best move
+						if depth == 0:					#If this is the root node, return all the details of the best move ("v")
+							return bestMove				#The return BREAKS from loop by quitting function
+						return bestMove[0]				#If this is not a root node, a simple board value is sufficient	("v[0]")
+					
+			if depth == 0:					#If this is the root node, return all the details of the best move ("v")
+				return bestMove
+			return bestMove[0]				#If this is not a root node, a simple board value is sufficient ("v[0]")
+		else:
+			worstMove = 0		#Holds the worst move heuristic for computer ("v = inf")
+
+			possibleMoves = self.genMoves(board, self.enemyColor)	#Get all possible enemy moves
+			for piece,moves in possibleMoves.items():	#Iterates through all moves, and sends new board states to maximum
+				for move in moves:
+					delta = self.heuristicVal(piece, move)	#FORWARD PRUNING
+					if delta > 0:
+						continue
+					boardCopy = board[:]	#Copy of board
+					boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
+					
+					#Get moves returned from maxmimum node, store move with smallest heuristic	(or "v")
+					tempMove = self.alphaBeta(boardCopy, depth + 1, alpha, beta, True, heuristicScore + delta)
+					if tempMove < worstMove:	#This is essentially: v := min(v, alphabeta(child...))
+						worstMove = tempMove
+					
+					beta = min(beta, tempMove)	#Get new beta value if a smaller heuristic (than beta) is found
+					if beta <= alpha:			#If the beta value ever gets lower than alpha, prune all other branches
+						return worstMove		#Return current worst heuristic ("v")
+												#The return BREAKS from loop by quitting function
+			return worstMove				#Return worst heuristic
 	
 	def heuristicOfBoard(self, board):	#Returns heuristic value of entire board
 		redCorner = self.GUI.dim-1					#this is the farthest corner in the red base
