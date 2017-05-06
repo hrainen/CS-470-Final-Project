@@ -48,9 +48,11 @@ class ProjectTBD:
 		
 		self.GUI.refreshBoard()
 		
+		
 	def minimax(self, board, numPly):	#This gets the whole max/min tree running
 		alpha = -10000000				#Starting alpha beta values
 		beta = 10000000
+
 		self.plyLimit = numPly			#Set ply limit for maximum to use
 		heuristicScore = self.heuristicOfBoard(board)
 		result = self.maximum(board, 0, heuristicScore, alpha, beta)	#Give maximum the current board, set current ply to 0
@@ -80,13 +82,14 @@ class ProjectTBD:
 					if numPly == 0:					#If this is the root node, return all the details of the best move
 						return bestMove
 					return bestMove[0]				#If this is not a root node, a simple board value is sufficient
-		
+				
 		if numPly == 0:					#If this is the root node, return all the details of the best move
 			return bestMove
 		return bestMove[0]				#If this is not a root node, a simple board value is sufficient
 	
 	def minimum(self, board, numPly, heuristicScore, alpha, beta):	#Minimum node of tree
 		worstMove = 0		#Holds the worst move heuristic for computer
+
 		possibleMoves = self.genMoves(board, self.enemyColor)	#Get all possible enemy moves
 		for piece,moves in possibleMoves.items():	#Iterates through all moves, and sends new board states to maximum
 			for move in moves:
