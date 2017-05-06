@@ -9,6 +9,7 @@ class ProjectTBD:
 		self.GUI = GUI
 		self.color = color
 		self.plyLimit = 0
+		self.start = 0
 		if self.color == "green":
 			self.enemyColor = "red"
 		else:
@@ -18,7 +19,7 @@ class ProjectTBD:
 		self.chosenMove = (0,0)
 		
 	def calculateMove(self):	#This function activates minimax in the first place
-		start = time.time()
+		self.start = time.time()
 		numPly = 1
 		
 		board = self.GUI.genSimpleBoard()
@@ -31,15 +32,16 @@ class ProjectTBD:
 				self.chosenPiece = self.chosenPiece[0]
 			
 		while(True):
-			if time.time() - start > self.time/2 or numPly >= 3:
-				print("Next move computed in %f seconds" % (time.time() - start))
+			if time.time() - self.start > self.time - 1:	#Once time has run out, make the selected move
+				print("Next move computed in %f seconds" % (time.time() - self.start))
 				self.makeMove()
 				break
 			chosenPair = self.minimax(board, numPly)
-			self.chosenPiece = chosenPair[0]
-			self.chosenMove = chosenPair[1]
-			print("Ply %d reached" % numPly)
-			numPly += 1
+			if chosenPair != None:	#If minimax returns something, change the current selected move
+				self.chosenPiece = chosenPair[0]
+				self.chosenMove = chosenPair[1]
+				print("Ply %d reached" % numPly)
+				numPly += 1
 		
 	def makeMove(self):	#Makes the final move decided by the computer
 		print("Time's up!")
@@ -56,11 +58,18 @@ class ProjectTBD:
 		self.plyLimit = numPly			#Set ply limit for maximum to use
 		heuristicScore = self.heuristicOfBoard(board)
 		result = self.alphaBeta(board, 0, alpha, beta, True, heuristicScore)	#Give maximum the current board, set current ply to 0
+		if result[0] == 10000000:		#If time ran out during execution, return None
+			return None
 		return [result[1], result[2]]	#Return movement results
 	
 	def alphaBeta(self, board, depth, alpha, beta, maximizingPlayer, heuristicScore):
 		if depth >= self.plyLimit:	#Base case. If ply limit reached, return current heuristicScore
 			return heuristicScore
+		
+		if time.time() - self.start > self.time - 1:
+			if depth == 0 and maximizingPlayer:	#If time has run out, pass the 10000000 flag up the tree
+				return [10000000, None, None]
+			return 10000000
 		
 		if maximizingPlayer:
 			bestMove = [-999, None, None]	#Holds the best move  ("v = -inf")
@@ -75,6 +84,12 @@ class ProjectTBD:
 					
 					#Get moves returned from minimum node, store largest heuristic received, tempMove is essentially "v"
 					tempMove = [self.alphaBeta(boardCopy, depth, alpha, beta, False, heuristicScore + delta), piece, move]
+					
+					if tempMove[0] == 10000000:	#If time has run out, this flag (10000000) must be passed to the top
+						if depth == 0:
+							return tempMove
+						return tempMove[0]
+						
 					if tempMove[0] > bestMove[0]:	#This is essentially: v := max(v, alphabeta(child...)) on the wiki
 						bestMove = tempMove
 						
@@ -101,6 +116,10 @@ class ProjectTBD:
 					
 					#Get moves returned from maxmimum node, store move with smallest heuristic	(or "v")
 					tempMove = self.alphaBeta(boardCopy, depth + 1, alpha, beta, True, heuristicScore + delta)
+					
+					if tempMove == 10000000:	#If time has run out, this flag (10000000) must be passed to the top
+						return tempMove
+						
 					if tempMove < worstMove:	#This is essentially: v := min(v, alphabeta(child...))
 						worstMove = tempMove
 					
