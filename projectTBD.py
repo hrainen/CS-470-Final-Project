@@ -13,6 +13,7 @@ class ProjectTBD:
 		self.nodesQueued = 0
 		self.nodesExplored = 0
 		self.boardStatesEvaluated = 0
+		self.numPruningEvents = [0]
 		self.doAlphaBeta = True
 		if self.color == "green":
 			self.enemyColor = "red"
@@ -22,10 +23,13 @@ class ProjectTBD:
 		self.chosenPiece = [(0,0),[]]
 		self.chosenMove = (0,0)
 	
-	def resetData(self):
+	def resetData(self, numPly):
 		self.nodesQueued = 0
 		self.nodesExplored = 0
 		self.boardStatesEvaluated = 0
+		self.numPruningEvents = []
+		for i in range(numPly):
+			self.numPruningEvents.append(0)
 	
 	def calculateMove(self):	#This function activates minimax in the first place
 		self.start = time.time()
@@ -43,7 +47,7 @@ class ProjectTBD:
 		while(True):
 			if time.time() - self.start > self.time - 1:	#Once time has run out, make the selected move
 				print("Time's up!")
-				print("Move computed in %f seconds" % (time.time() - self.start))
+				print("Stopped at %f seconds" % (time.time() - self.start))
 				print("\n~~~~~~~~~~~~~~~~~~~~~~\n")
 				self.makeMove()
 				break
@@ -53,10 +57,12 @@ class ProjectTBD:
 				self.chosenMove = chosenPair[1]
 				print("Ply %d reached" % numPly)
 				print("%d explored nodes" % self.nodesExplored)
+				print("%d pruning events, at ply [0 1 ...] -> [%s]" % (sum(self.numPruningEvents), ' '.join(str(x) for x in self.numPruningEvents)))
 				print("%d nodes pruned (%.1f%%)" % (self.nodesQueued - self.nodesExplored, 100 - 100.0*self.nodesExplored/self.nodesQueued))
-				print("%d calculated board states\n" % self.boardStatesEvaluated)
-				self.resetData()
+				print("%d calculated board states" % self.boardStatesEvaluated)
+				print("Time taken: %.4f seconds\n" % (time.time() - self.start))
 				numPly += 1
+				self.resetData(numPly)
 		
 	def makeMove(self):	#Makes the final move decided by the computer
 		self.GUI.selectedPiece = self.GUI.board[self.GUI.coordToIndice(self.chosenPiece)]
@@ -118,6 +124,7 @@ class ProjectTBD:
 						
 					alpha = max(alpha, tempMove[0])	#If current heuristic is larger than alpha, replace alpha
 					if beta <= alpha and self.doAlphaBeta:	#If alpha is ever greater than beta, ignore all other branches, return current best move
+						self.numPruningEvents[depth] += 1
 						if depth == 0:					#If this is the root node, return all the details of the best move ("v")
 							return bestMove				#The return BREAKS from loop by quitting function
 						return bestMove[0]				#If this is not a root node, a simple board value is sufficient	("v[0]")
@@ -149,6 +156,7 @@ class ProjectTBD:
 					
 					beta = min(beta, tempMove)	#Get new beta value if a smaller heuristic (than beta) is found
 					if beta <= alpha and self.doAlphaBeta:	#If the beta value ever gets lower than alpha, prune all other branches
+						self.numPruningEvents[depth] += 1
 						return worstMove		#Return current worst heuristic ("v")
 												#The return BREAKS from loop by quitting function
 			return worstMove				#Return worst heuristic
