@@ -16,7 +16,7 @@ class HalmaGUI:
 		self.computerColor = computerColor
 		self.dim = dim						#Holds board dimensions
 		self.statusText = StringVar()	#This is the status text at the top of the GUI
-		self.statusText.set("Select a piece to move")	#Initially set status
+		
 		#Create status text, pass in self.statusText variable
 		self.status = Label(screen, textvariable = self.statusText, justify = CENTER, relief = RIDGE, width = 40)
 		#Add status text to GUI using grid() layout, it should be centered along the top of the halma grid
@@ -33,6 +33,9 @@ class HalmaGUI:
 			self.loadFromFile(inputFile)
 		
 		self.addLabels()		#Add labels to board
+		
+		scoreText = self.getScore()
+		self.statusText.set("Select a piece to move. Scores: (%s)" % (' '.join(str(x) for x in scoreText)))	#Initially set status
 		
 		#Add button activate save modal, so that user can save board
 		tkinter.Button(screen, text = "SAVE BOARD", command = self.saveModal, relief = GROOVE)\
@@ -397,9 +400,11 @@ class HalmaGUI:
 				if self.gameWon():
 					self.disableBoard()
 				else:
+					scoreText = self.getScore()
 					self.statusText.set("A piece has been moved! ("\
 						+ str(self.movedPieces[1][2]//self.dim + 1) + "," + chr(self.movedPieces[1][2]%self.dim + 97) + ")->("\
-						+ str(self.movedPieces[0][2]//self.dim + 1) + "," + chr(self.movedPieces[0][2]%self.dim + 97) + ")")
+						+ str(self.movedPieces[0][2]//self.dim + 1) + "," + chr(self.movedPieces[0][2]%self.dim + 97) + ")"\
+						+ " Scores: (%s)" % (' '.join(str(x) for x in scoreText)))
 				# Update self.playerTurn to be the opponents turn
 				if self.playerTurn == "O":
 					self.playerTurn = "X"
@@ -461,6 +466,30 @@ class HalmaGUI:
 			simpleBoard.append(piece[0])
 		return simpleBoard
 	
+	def distanceBetweenPoints(self, x, y, a, b):
+		return int(((a-x)**2 + (b-y)**2)**(1/2))
+	
+	def getScore(self):
+		totalScore = [0, 0]
+		distance = 0
+		for i in range(self.dim):
+			for j in range(self.dim):
+				if self.board[i * self.dim + j][0] == 'O' and not self.inTopRight(i, j):
+					for x in range(self.dim//2, self.dim):
+						tempDist = self.distanceBetweenPoints(j, i, x, x - self.dim/2)
+						if distance == 0 or tempDist < distance:
+							distance = tempDist
+					totalScore[1] += distance
+					distance = 0
+				elif self.board[i * self.dim + j][0] == 'X' and not self.inBottomLeft(i, j):
+					for x in range(self.dim//2):
+						tempDist = self.distanceBetweenPoints(j, i, x, x + self.dim/2)
+						if distance == 0 or tempDist < distance:
+							distance = tempDist
+					totalScore[0] += distance
+					distance = 0
+		return totalScore
+	
 	def gameWon(self):	#Detects if a side wins
 		winnerO = True
 		winnerX = True
@@ -472,14 +501,15 @@ class HalmaGUI:
 				elif(self.inBottomLeft(i, j)):	#If bottom left corner isn't filled with red, red does not win
 					if self.board[i * self.dim + j][0] != 'X':
 						winnerX = False
+		scoreText = self.getScore()
 		if winnerO and winnerX:		#If both sides win, be very confused
-			self.statusText.set("Both sides won...somehow")
+			self.statusText.set("Both sides won...somehow. Scores: (%s)" % (' '.join(str(x) for x in scoreText)))
 			return True
 		elif winnerX:				#If red team wins, update status with good news
-			self.statusText.set("Team Red Wins!")
+			self.statusText.set("Team Red Wins! Scores: (%s)" % (' '.join(str(x) for x in scoreText)))
 			return True
 		elif winnerO:				#If green team wins, update status with good news
-			self.statusText.set("Team Green Wins!")
+			self.statusText.set("Team Green Wins! Scores: (%s)" % (' '.join(str(x) for x in scoreText)))
 			return True
 		else:						#If no teams win, return false
 			return False
