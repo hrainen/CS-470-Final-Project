@@ -51,6 +51,7 @@ class ProjectTBD:
 				print("\n~~~~~~~~~~~~~~~~~~~~~~\n")
 				self.makeMove()
 				break
+			board = self.GUI.genSimpleBoard()
 			chosenPair = self.minimax(board, numPly)
 			if chosenPair != None:	#If minimax returns something, change the current selected move
 				self.chosenPiece = chosenPair[0]
@@ -65,6 +66,8 @@ class ProjectTBD:
 				self.resetData(numPly)
 		
 	def makeMove(self):	#Makes the final move decided by the computer
+		#print(self.chosenPiece[0])
+		#print("%d, %d" % (self.chosenMove[0], self.chosenMove[1]))
 		self.GUI.selectedPiece = self.GUI.board[self.GUI.coordToIndice(self.chosenPiece)]
 		self.GUI.moveSelectedPiece(self.GUI.board[self.GUI.coordToIndice(self.chosenMove)])
 		
@@ -80,18 +83,25 @@ class ProjectTBD:
 		self.nodesQueued += 1
 		result = self.alphaBeta(board, 0, alpha, beta, True, heuristicScore)	#Give maximum the current board, set current ply to 0
 		
-		if result[0] == 10000000:		#If time ran out during execution, return None
+		if result == None or result[0] == 10000000 or result[0] <= -999 or result[0] == None or result[1] == None:
 			return None
 		return [result[1], result[2]]	#Return movement results
 		
 	def getNumberOfNodesQueued(self, possibleMoves):
 		for piece,moves in possibleMoves.items():
 			self.nodesQueued += len(moves)
-		
+	
+	def returnMax(self, depth, bestMove):
+		if depth == 0:
+			return bestMove
+		return bestMove[0]
+	
 	def alphaBeta(self, board, depth, alpha, beta, maximizingPlayer, heuristicScore):
 		self.nodesExplored += 1
 		if depth >= self.plyLimit:	#Base case. If ply limit reached, return current heuristicScore
 			self.boardStatesEvaluated += 1
+			if self.gameWon(board, self.color):
+				return 1000
 			return heuristicScore
 		
 		if time.time() - self.start > self.time - 1:
@@ -113,11 +123,12 @@ class ProjectTBD:
 					
 					#Get moves returned from minimum node, store largest heuristic received, tempMove is essentially "v"
 					tempMove = [self.alphaBeta(boardCopy, depth, alpha, beta, False, heuristicScore + delta), piece, move]
+					if self.gameWon(boardCopy, self.color):
+						tempMove[0] = 1000
+						return self.returnMax(depth, tempMove)
 					
 					if tempMove[0] == 10000000:	#If time has run out, this flag (10000000) must be passed to the top
-						if depth == 0:
-							return tempMove
-						return tempMove[0]
+						return self.returnMax(depth, tempMove)
 						
 					if tempMove[0] > bestMove[0]:	#This is essentially: v := max(v, alphabeta(child...)) on the wiki
 						bestMove = tempMove
@@ -125,13 +136,9 @@ class ProjectTBD:
 					alpha = max(alpha, tempMove[0])	#If current heuristic is larger than alpha, replace alpha
 					if beta <= alpha and self.doAlphaBeta:	#If alpha is ever greater than beta, ignore all other branches, return current best move
 						self.numPruningEvents[depth] += 1
-						if depth == 0:					#If this is the root node, return all the details of the best move ("v")
-							return bestMove				#The return BREAKS from loop by quitting function
-						return bestMove[0]				#If this is not a root node, a simple board value is sufficient	("v[0]")
+						return self.returnMax(depth, bestMove)	#The return BREAKS from loop by quitting function
 					
-			if depth == 0:					#If this is the root node, return all the details of the best move ("v")
-				return bestMove
-			return bestMove[0]				#If this is not a root node, a simple board value is sufficient ("v[0]")
+			return self.returnMax(depth, bestMove)
 		else:
 			worstMove = 0		#Holds the worst move heuristic for computer ("v = inf")
 
@@ -144,7 +151,8 @@ class ProjectTBD:
 						continue
 					boardCopy = board[:]	#Copy of board
 					boardCopy = self.makeTempMove(self.GUI.coordToIndice(piece), self.GUI.coordToIndice(move), boardCopy)
-					
+					if self.gameWon(boardCopy, self.enemyColor):
+						return -1000
 					#Get moves returned from maxmimum node, store move with smallest heuristic	(or "v")
 					tempMove = self.alphaBeta(boardCopy, depth + 1, alpha, beta, True, heuristicScore + delta)
 					
@@ -328,3 +336,17 @@ class ProjectTBD:
 		elif board[start] == 'X' and not self.GUI.inTopRight(start//self.GUI.dim, start%self.GUI.dim):
 			if self.GUI.inTopRight(end//self.GUI.dim, end%self.GUI.dim):
 				return True
+				
+	def gameWon(self, board, color):	#Detects if a side wins
+		if color == "green":
+			for i in range(self.GUI.dim//2):
+				for j in range(self.GUI.dim//2 + i, self.GUI.dim):
+					if board[i * self.GUI.dim + j] != 'O':
+						return False
+		elif color == "red":
+			for i in range(self.GUI.dim//2, self.GUI.dim):
+				for j in range(i - 3):
+					if board[i * self.GUI.dim + j] != 'X':
+						return False
+		return True
+		
