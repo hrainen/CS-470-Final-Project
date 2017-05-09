@@ -81,6 +81,7 @@ class ProjectTBD:
 		self.plyLimit = numPly			#Set ply limit for maximum to use
 		heuristicScore = self.heuristicOfBoard(board)
 		self.nodesQueued += 1
+		self.boardStatesEvaluated += 1
 		result = self.alphaBeta(board, 0, alpha, beta, True, heuristicScore)	#Give maximum the current board, set current ply to 0
 		
 		if result == None or result[0] == 10000000 or result[0] <= -999 or result[0] == None or result[1] == None:
