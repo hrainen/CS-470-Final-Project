@@ -15,6 +15,17 @@ class ProjectTBD:
 		self.boardStatesEvaluated = 0
 		self.numPruningEvents = [0]
 		self.doAlphaBeta = True
+		
+		#coords of potential adjacent jumps
+		self.adjJumps = [(-2, -2), (0, -2), (2, -2),
+						 (-2, 0), 			(2, 0),
+						 (-2, 2), (0, 2),   (2, 2)]
+
+		# the coordinates of potential adjacent pieces
+		self.adjPos = [(-1,-1),(0,-1),(1,-1),
+					   (-1,0),        (1,0),
+					   (-1,1), (0,1), (1,1)]
+		
 		if self.color == "green":
 			self.enemyColor = "red"
 		else:
@@ -34,6 +45,7 @@ class ProjectTBD:
 	def calculateMove(self):	#This function activates minimax in the first place
 		self.start = time.time()
 		numPly = 1
+		self.resetData(numPly)
 		
 		board = self.GUI.genSimpleBoard()
 		#print(self.heuristicOfBoard(board))
@@ -58,12 +70,12 @@ class ProjectTBD:
 				self.chosenMove = chosenPair[1]
 				print("Ply %d reached" % numPly)
 				print("%d explored nodes" % self.nodesExplored)
-				print("%d pruning events, at ply [0 1 ...] -> [%s]" % (sum(self.numPruningEvents), ' '.join(str(x) for x in self.numPruningEvents)))
+				print("%d alpha beta pruning events, at ply [0 1 ...] -> [%s]" % (sum(self.numPruningEvents), ' '.join(str(x) for x in self.numPruningEvents)))
 				print("%d nodes pruned (%.1f%%)" % (self.nodesQueued - self.nodesExplored, 100 - 100.0*self.nodesExplored/self.nodesQueued))
 				print("%d calculated board states" % self.boardStatesEvaluated)
 				print("Time taken: %.4f seconds\n" % (time.time() - self.start))
 				numPly += 1
-				self.resetData(numPly)
+			self.resetData(numPly)
 		
 	def makeMove(self):	#Makes the final move decided by the computer
 		#print(self.chosenPiece[0])
@@ -184,32 +196,15 @@ class ProjectTBD:
 				elif board[self.GUI.coordToIndice((i, j))] == 'X' and self.color == "red":
 					totalStraightLineDistance += self.heuristicVal((i,j), grnCornerCoord)
 		return -totalStraightLineDistance
-		
-	def heuristicVal(self, pos, newPos):
-		redCorner = self.GUI.dim-1					#this is the farthest corner in the red base
-		redCornerCoord = self.GUI.indiceToCoord(redCorner)
-		grnCorner = (self.GUI.dim*(self.GUI.dim-1))	#this is the farthest corner in the grn base
-		grnCornerCoord = self.GUI.indiceToCoord(grnCorner)
-
-		if self.color == "green":
-			posDist = int(((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2))
-			newPosDist = int(((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2))
-		else:
-			#distance between two points = sqrt((Ynew - Yold)^2+(Xnew-Xold)^2)
-			posDist = int(((grnCornerCoord[1]-pos[1])**2+(grnCornerCoord[0]-pos[0])**2)**(1/2))
-			# then find distance between the potential spot we want to move to, and the green corner
-			newPosDist = int(((grnCornerCoord[1]-newPos[1])**2+(grnCornerCoord[0]-newPos[0])**2)**(1/2))
 			
 		# this is a positive or negative value depending on if were moving towards the enemy corner or away from it
-		delta = posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
+		#delta = posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
 		# some helper print statements to see what is going on.
 		#print(pos, "to", newPos, " distance: ", delta)
-		return delta
+		#return delta
 	
 	def makeTempMove(self, start, end, board):	#Alter temporary board state based on move specified by start and end
-		pieceToMove = board[start]
-		board[start] = ' '
-		board[end] = pieceToMove
+		board[start], board[end] = board[end], board[start]
 		return board
 	
 	def genMoves(self, board, color):
@@ -218,106 +213,94 @@ class ProjectTBD:
 		# loop through the board, if the piece being checked belongs to the player whos moves we're generating
 		if color == "green":
 			for i in range(self.GUI.dim*self.GUI.dim):
-				if board[i] == "O": # generate valid moves for that piece
+				if board[i] == 'O': # generate valid moves for that piece
 					self.allValMoves.update(self.getValidMoves(i, board))
 		else:
 			for i in range(self.GUI.dim*self.GUI.dim):
-				if board[i] == "X": # generate valid moves for that piece
+				if board[i] == 'X': # generate valid moves for that piece
 					self.allValMoves.update(self.getValidMoves(i, board))
 		return self.allValMoves
 		
 	def getValidMoves(self, pos, board):
-		self.X = pos % self.GUI.dim 			# converts indice to X-coord
-		self.Y = pos // self.GUI.dim			# converts indice to Y-coord
-		self.coord = (self.X, self.Y)		# 2-tuple for the coord (X,Y)
-		self.valMoves = []					# List to store all valid coordinates(X,Y) at
-
-		# the coordinates of adjacent squares
-		self.adjPos = [(-1,-1),(0,-1),(1,-1),
-					   (-1,0),        (1,0),
-					   (-1,1), (0,1), (1,1)]
+		#X = pos % self.GUI.dim 			# converts indice to X-coord
+		#Y = pos // self.GUI.dim			# converts indice to Y-coord
+		coord = (pos % self.GUI.dim, pos // self.GUI.dim)		# 2-tuple for the coord (X,Y)
+		valMoves = []					# List to store all valid coordinates(X,Y) at
+		jumpList = []
 
 		# check to see if all adjacent moves are valid
 		for j in self.adjPos:
-			self.newX = self.X + j[0] # gets the actual adjacent X value
-			self.newY = self.Y + j[1] # gets the actual adjacent Y value
-			self.newCoord = (self.newX, self.newY)
-
-			self.newIndice = self.newCoord[0] + self.newCoord[1]*self.GUI.dim
-
+			newCoord = (coord[0] + j[0], coord[1] + j[1]) # gets the actual adjacent coordinates
+			jumpCoord = (coord[0] + (j[0] * 2), coord[1] + (j[1] * 2))
+			
+			#newIndice = newCoord[0] + newCoord[1] * self.GUI.dim
 
 			# checks if the adjacent X position is in bounds
-			if self.newX >= 0 and self.newX < self.GUI.dim:
+			if newCoord[0] >= 0 and newCoord[0] < self.GUI.dim:
 				# checks if the adjacent Y position is in bounds
-				if self.newY >= 0 and self.newY < self.GUI.dim:
+				if newCoord[1] >= 0 and newCoord[1] < self.GUI.dim:
 					#  if the position is blank (no piece is there)
-					if board[self.newIndice] == " ":
+					if board[newCoord[0] + newCoord[1] * self.GUI.dim] == ' ':
 						# add that position to the list of valid positions
-						self.valMoves.append(self.newCoord)
+						valMoves.append(newCoord)
+					if board[newCoord[0] + newCoord[1] * self.GUI.dim] != ' ':
+						if jumpCoord[0] >= 0 and jumpCoord[0] < self.GUI.dim and jumpCoord[1] >= 0 and jumpCoord[1] < self.GUI.dim:
+							if board[jumpCoord[0] + jumpCoord[1] * self.GUI.dim] == ' ':
+								jumpList.append(jumpCoord)
 
 		# check if there are any jumps for the initial piece passed in
-		self.jumps = list(self.getJumps(self.coord, [], board))
-		if self.jumps != None:
-			self.valMoves = self.valMoves + list(self.jumps)
+		jumps = self.getJumps(coord, [], board)
+		if jumps != None:
+			valMoves = valMoves + jumps
 		#print("jumps: ", self.coord, ":", self.jumps)
 		
 		validatedMoves = []		#Filters moves based on whether they follow territory rules
-		for move in self.valMoves:
-			if self.territoryConflict(self.GUI.coordToIndice(self.coord), self.GUI.coordToIndice(move), board):
+		for move in valMoves:
+			if self.territoryConflict(self.GUI.coordToIndice(coord), self.GUI.coordToIndice(move), board):
 				continue
 			validatedMoves.append(move)
-		return {self.coord: validatedMoves} 	#returns valid positions for one piece to move to
-
+		return {coord: validatedMoves} 	#returns valid positions for one piece to move to
+		
 	# @ params: takes in the position you want to jump to, and the list of seen positions
 	# returns a list of valid positions something can jump to.
 	def getJumps(self, pos, seen, board):
-		self.valJumps = [] # keeps track of valid jump positions.
-		self.newSeen = list(seen)  # new seen list to add any valid jumps we visit to
-
-		#coords of potential adjacent jumps
-		self.adjJumps = [(-2, -2), (0, -2), (2, -2),
-						 (-2, 0), 			(2, 0),
-						 (-2, 2), (0, 2),   (2, 2)]
-
-		# the coordinates of potential adjacent pieces to jump over
-		self.adjPos = [(-1, -1), (0, -1), (1, -1),
-					   (-1, 0), 		  (1, 0),
-					   (-1, 1),  (0, 1),  (1, 1)]
+		valJumps = [] # keeps track of valid jump positions.
+		newSeen = seen  # new seen list to add any valid jumps we visit to
 
 		for z in range(0,8):
-			self.newAdjX = pos[0] + self.adjPos[z][0]
-			self.newAdjY = pos[1] + self.adjPos[z][1]
-			self.newAdjCoord = (self.newAdjX, self.newAdjY)
+			#newAdjX = pos[0] + self.adjPos[z][0]
+			#newAdjY = pos[1] + self.adjPos[z][1]
+			newAdjCoord = (pos[0] + self.adjPos[z][0], pos[1] + self.adjPos[z][1])
 
-			self.adjIndic = self.newAdjCoord[0] + self.newAdjCoord[1]*self.GUI.dim
+			#adjIndic = newAdjCoord[0] + newAdjCoord[1]*self.GUI.dim
 
 
-			self.jumpX = pos[0] + self.adjJumps[z][0]  # gets the jump X value
-			self.jumpY = pos[1] + self.adjJumps[z][1]  # gets the jump Y value
-			self.jumpCoord = (self.jumpX, self.jumpY) # makes tuple for the X,Y for the jump coord
+			#jumpX = pos[0] + self.adjJumps[z][0]  # gets the jump X value
+			#jumpY = pos[1] + self.adjJumps[z][1]  # gets the jump Y value
+			jumpCoord = (pos[0] + self.adjJumps[z][0], pos[1] + self.adjJumps[z][1]) # makes tuple for the X,Y for the jump coord
 
 			# convert new jump (X,Y) to an indice
-			self.jIndice = self.jumpCoord[0] + self.jumpCoord[1] * self.GUI.dim
+			#jIndice = jumpCoord[0] + jumpCoord[1] * self.GUI.dim
 
 
 			# check if jumpcoord is in bounds
-			if self.jumpX >= 0 and self.jumpX < self.GUI.dim:
-				if self.jumpY >= 0 and self.jumpY < self.GUI.dim:
+			if jumpCoord[0] >= 0 and jumpCoord[0] < self.GUI.dim:
+				if jumpCoord[1] >= 0 and jumpCoord[1] < self.GUI.dim:
 					# and not in list of seen positions.
-					if self.jumpCoord not in seen:
+					if jumpCoord not in seen:
 						# if there is a piece before the jump
-						if board[self.adjIndic] != " ":
+						if board[newAdjCoord[0] + newAdjCoord[1]*self.GUI.dim] != ' ':
 							# and the spot we want to jump to is not occupied by a piece, add to valid moves
-							if board[self.jIndice] == " ":
-								self.valJumps.append(self.jumpCoord)
-								self.newSeen.append(self.jumpCoord)
+							if board[jumpCoord[0] + jumpCoord[1] * self.GUI.dim] == " ":
+								valJumps.append(jumpCoord)
+								newSeen.append(jumpCoord)
 
 		# recursively find any more jump positions, update seen to have the place we just jumped to
-		for valJump in self.valJumps:
-			self.valJumps = self.valJumps + list(self.getJumps(valJump, self.newSeen, board))
+		for valJump in valJumps:
+			valJumps = valJumps + self.getJumps(valJump, newSeen, board)
 
-		if self.valJumps != None:
-			return self.valJumps
+		if valJumps != None:
+			return valJumps
 		else:
 			return None
 			
