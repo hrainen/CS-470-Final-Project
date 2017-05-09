@@ -198,16 +198,18 @@ class ProjectTBD:
 		return -totalStraightLineDistance
 		
 	def heuristicVal(self, pos, newPos):
-		delta = 0
-		redCorner = self.GUI.dim-1					#this is the farthest corner in the red base
-		redCornerCoord = self.GUI.indiceToCoord(redCorner)
-		grnCorner = (self.GUI.dim*(self.GUI.dim-1))	#this is the farthest corner in the grn base
-		grnCornerCoord = self.GUI.indiceToCoord(grnCorner)
+		#delta = 0
+		#redCorner = self.GUI.dim-1					#this is the farthest corner in the red base
+		#redCornerCoord = self.GUI.indiceToCoord(redCorner)
+		#grnCorner = (self.GUI.dim*(self.GUI.dim-1))	#this is the farthest corner in the grn base
+		#grnCornerCoord = self.GUI.indiceToCoord(grnCorner)
 
 		if self.color == "green":
-			posDist = ((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2)
-			newPosDist = ((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2)
-
+			redCornerCoord = self.GUI.indiceToCoord(self.GUI.dim-1)
+			#posDist = ((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2)
+			#newPosDist = ((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2)
+			delta =  int(((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2)) -\
+					int(((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2))
 			# if new pos is top right diagonal add two points
 			if newPos[1] < pos[1] and newPos[0] > pos[0]:
 				delta += 2
@@ -219,16 +221,17 @@ class ProjectTBD:
 			# if new pos is right, add one point
 			if newPos[0] > pos[0]:
 				delta += 1
-
-
-
 			
 		else:
+			grnCornerCoord = self.GUI.indiceToCoord(self.GUI.dim*(self.GUI.dim-1))
 			#distance between two points = sqrt((Ynew - Yold)^2+(Xnew-Xold)^2)
-			posDist = ((grnCornerCoord[1]-pos[1])**2+(grnCornerCoord[0]-pos[0])**2)**(1/2)
+			#posDist = ((grnCornerCoord[1]-pos[1])**2+(grnCornerCoord[0]-pos[0])**2)**(1/2)
 			# then find distance between the potential spot we want to move to, and the green corner
-			newPosDist = ((grnCornerCoord[1]-newPos[1])**2+(grnCornerCoord[0]-newPos[0])**2)**(1/2)
+			#newPosDist = ((grnCornerCoord[1]-newPos[1])**2+(grnCornerCoord[0]-newPos[0])**2)**(1/2)
 
+			delta = int(((grnCornerCoord[1]-pos[1])**2+(grnCornerCoord[0]-pos[0])**2)**(1/2)) -\
+					int(((grnCornerCoord[1]-newPos[1])**2+(grnCornerCoord[0]-newPos[0])**2)**(1/2))
+					
 			# if new pos is top right diagonal add two points
 			if newPos[1] > pos[1] and newPos[0] < pos[0]:
 				delta += 2
@@ -242,7 +245,7 @@ class ProjectTBD:
 				delta += 1
 			
 		# this is a positive or negative value depending on if were moving towards the enemy corner or away from it
-		delta += posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
+		#delta += posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
 		# some helper print statements to see what is going on.
 		#print(pos, "to", newPos, " distance: ", delta)
 		return delta
