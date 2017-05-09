@@ -208,8 +208,14 @@ class ProjectTBD:
 			redCornerCoord = self.GUI.indiceToCoord(self.GUI.dim-1)
 			#posDist = ((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2)
 			#newPosDist = ((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2)
-			delta =  int(((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2)) -\
-					int(((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2))
+			delta =  ((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2) -\
+					((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2)
+
+                        # if new piece makes into enemy base, add more points
+			if not self.GUI.inTopRight(pos[1], pos[0]):
+				if self.GUI.inTopRight(newPos[1], newPos[0]):
+					delta += 3
+
 			# if new pos is top right diagonal add two points
 			if newPos[1] < pos[1] and newPos[0] > pos[0]:
 				delta += 2
@@ -229,9 +235,15 @@ class ProjectTBD:
 			# then find distance between the potential spot we want to move to, and the green corner
 			#newPosDist = ((grnCornerCoord[1]-newPos[1])**2+(grnCornerCoord[0]-newPos[0])**2)**(1/2)
 
-			delta = int(((grnCornerCoord[1]-pos[1])**2+(grnCornerCoord[0]-pos[0])**2)**(1/2)) -\
-					int(((grnCornerCoord[1]-newPos[1])**2+(grnCornerCoord[0]-newPos[0])**2)**(1/2))
+			delta = ((grnCornerCoord[1]-pos[1])**2+(grnCornerCoord[0]-pos[0])**2)**(1/2) -\
+					((grnCornerCoord[1]-newPos[1])**2+(grnCornerCoord[0]-newPos[0])**2)**(1/2)
 					
+
+                        # if new piece makes into enemy base, add more points
+			if not self.GUI.inBottomLeft(pos[1], pos[0]):
+				if self.GUI.inBottomLeft(newPos[1], newPos[0]):
+					delta += 3
+
 			# if new pos is top right diagonal add two points
 			if newPos[1] > pos[1] and newPos[0] < pos[0]:
 				delta += 2
