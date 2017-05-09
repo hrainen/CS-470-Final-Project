@@ -51,10 +51,10 @@ class ProjectTBD:
 		#print(self.heuristicOfBoard(board))
 		possibleMoves = self.genMoves(board, self.color)	#Select a random starting move, in case something goes wrong with minimax
 		if possibleMoves != []:
-			self.chosenPiece = random.choice(list(possibleMoves.items()))
-			if self.chosenPiece != [] and self.chosenPiece[1] != []:
-				self.chosenMove = random.choice(list(self.chosenPiece[1]))
-				self.chosenPiece = self.chosenPiece[0]
+			self.chosenPair = random.choice(list(possibleMoves.items()))
+			if self.chosenPair != [] and self.chosenPair[1] != []:
+				self.chosenPiece = self.chosenPair[0]
+				self.chosenMove = random.choice(list(self.chosenPair[1]))
 			
 		while(True):
 			if time.time() - self.start > self.time - 1:	#Once time has run out, make the selected move
@@ -210,6 +210,7 @@ class ProjectTBD:
 			#newPosDist = ((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2)
 			delta =  int(((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2)) -\
 					int(((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2))
+			
 			# if new pos is top right diagonal add two points
 			if newPos[1] < pos[1] and newPos[0] > pos[0]:
 				delta += 2
@@ -218,7 +219,7 @@ class ProjectTBD:
 			if newPos[1] < pos[1]:
 				delta += 1
 
-			# if new pos is right, add one point
+			#if new pos is right, add one point
 			if newPos[0] > pos[0]:
 				delta += 1
 			
