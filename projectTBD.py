@@ -196,11 +196,6 @@ class ProjectTBD:
 				elif board[self.GUI.coordToIndice((i, j))] == 'X' and self.color == "red":
 					totalStraightLineDistance += self.heuristicVal((i,j), grnCornerCoord)
 		return -totalStraightLineDistance
-<<<<<<< HEAD
-			
-		# this is a positive or negative value depending on if were moving towards the enemy corner or away from it
-		#delta = posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
-=======
 		
 	def heuristicVal(self, pos, newPos):
 		delta = 0
@@ -248,10 +243,9 @@ class ProjectTBD:
 			
 		# this is a positive or negative value depending on if were moving towards the enemy corner or away from it
 		delta += posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
->>>>>>> 9c53797a7aa2d8197c1956b69b25239c264cc031
 		# some helper print statements to see what is going on.
 		#print(pos, "to", newPos, " distance: ", delta)
-		#return delta
+		return delta
 	
 	def makeTempMove(self, start, end, board):	#Alter temporary board state based on move specified by start and end
 		board[start], board[end] = board[end], board[start]
