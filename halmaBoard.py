@@ -479,14 +479,14 @@ class HalmaGUI:
 						tempDist = self.distanceBetweenPoints(j, i, x, x - self.dim/2)
 						if distance == 0 or tempDist < distance:
 							distance = tempDist
-					totalScore[1] += distance
+					totalScore[0] += distance
 					distance = 0
 				elif self.board[i * self.dim + j][0] == 'X' and not self.inBottomLeft(i, j):
 					for x in range(self.dim//2):
 						tempDist = self.distanceBetweenPoints(j, i, x, x + self.dim/2)
 						if distance == 0 or tempDist < distance:
 							distance = tempDist
-					totalScore[0] += distance
+					totalScore[1] += distance
 					distance = 0
 		return totalScore
 	

@@ -345,7 +345,7 @@ class ProjectTBD:
 						return False
 		elif color == "red":
 			for i in range(self.GUI.dim//2, self.GUI.dim):
-				for j in range(i - 3):
+				for j in range(i - self.GUI.dim//2 + 1):
 					if board[i * self.GUI.dim + j] != 'X':
 						return False
 		return True
