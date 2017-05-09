@@ -215,7 +215,7 @@ class ProjectTBD:
                         # if new piece makes into enemy base, add more points
 			if not self.GUI.inTopRight(pos[1], pos[0]):
 				if self.GUI.inTopRight(newPos[1], newPos[0]):
-					delta += 3
+					delta += 3 #this needs to be more than the jump/ move left/down points so a piece will just move into enemy base instead of moving other pieces
 
 			# if new pos is top right diagonal add two points
 			if newPos[1] < pos[1] and newPos[0] > pos[0]:
@@ -243,17 +243,17 @@ class ProjectTBD:
                         # if new piece makes into enemy base, add more points
 			if not self.GUI.inBottomLeft(pos[1], pos[0]):
 				if self.GUI.inBottomLeft(newPos[1], newPos[0]):
-					delta += 3
+					delta += 3 #this needs to be more than the jump/ move left/down points so a piece will just move into enemy base instead of moving other pieces
 
-			# if new pos is top right diagonal add two points
+			# if new pos is bottom left diagonal add two points
 			if newPos[1] > pos[1] and newPos[0] < pos[0]:
 				delta += 2
 
-			# if new pos is up, add one point
+			# if new pos is down, add one point
 			if newPos[1] > pos[1]:
 				delta += 1
 
-			# if new pos is right, add one point
+			# if new pos is left, add one point
 			if newPos[0] < pos[0]:
 				delta += 1
 			
