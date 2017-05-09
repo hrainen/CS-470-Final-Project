@@ -196,9 +196,59 @@ class ProjectTBD:
 				elif board[self.GUI.coordToIndice((i, j))] == 'X' and self.color == "red":
 					totalStraightLineDistance += self.heuristicVal((i,j), grnCornerCoord)
 		return -totalStraightLineDistance
+<<<<<<< HEAD
 			
 		# this is a positive or negative value depending on if were moving towards the enemy corner or away from it
 		#delta = posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
+=======
+		
+	def heuristicVal(self, pos, newPos):
+		delta = 0
+		redCorner = self.GUI.dim-1					#this is the farthest corner in the red base
+		redCornerCoord = self.GUI.indiceToCoord(redCorner)
+		grnCorner = (self.GUI.dim*(self.GUI.dim-1))	#this is the farthest corner in the grn base
+		grnCornerCoord = self.GUI.indiceToCoord(grnCorner)
+
+		if self.color == "green":
+			posDist = ((redCornerCoord[1]-pos[1])**2+(redCornerCoord[0]-pos[0])**2)**(1/2)
+			newPosDist = ((redCornerCoord[1]-newPos[1])**2+(redCornerCoord[0]-newPos[0])**2)**(1/2)
+
+			# if new pos is top right diagonal add two points
+			if newPos[1] < pos[1] and newPos[0] > pos[0]:
+				delta += 2
+
+			# if new pos is up, add one point
+			if newPos[1] < pos[1]:
+				delta += 1
+
+			# if new pos is right, add one point
+			if newPos[0] > pos[0]:
+				delta += 1
+
+
+
+			
+		else:
+			#distance between two points = sqrt((Ynew - Yold)^2+(Xnew-Xold)^2)
+			posDist = ((grnCornerCoord[1]-pos[1])**2+(grnCornerCoord[0]-pos[0])**2)**(1/2)
+			# then find distance between the potential spot we want to move to, and the green corner
+			newPosDist = ((grnCornerCoord[1]-newPos[1])**2+(grnCornerCoord[0]-newPos[0])**2)**(1/2)
+
+			# if new pos is top right diagonal add two points
+			if newPos[1] > pos[1] and newPos[0] < pos[0]:
+				delta += 2
+
+			# if new pos is up, add one point
+			if newPos[1] > pos[1]:
+				delta += 1
+
+			# if new pos is right, add one point
+			if newPos[0] < pos[0]:
+				delta += 1
+			
+		# this is a positive or negative value depending on if were moving towards the enemy corner or away from it
+		delta += posDist - newPosDist # just compares distance from original spot to enemy base, and dist from new spot to enemy base
+>>>>>>> 9c53797a7aa2d8197c1956b69b25239c264cc031
 		# some helper print statements to see what is going on.
 		#print(pos, "to", newPos, " distance: ", delta)
 		#return delta
