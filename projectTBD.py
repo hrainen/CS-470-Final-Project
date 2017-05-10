@@ -96,7 +96,8 @@ class ProjectTBD:
 		self.boardStatesEvaluated += 1
 		result = self.alphaBeta(board, 0, alpha, beta, True, heuristicScore)	#Give maximum the current board, set current ply to 0
 		
-		if result == None or result[0] == 10000000 or result[0] <= -999 or result[0] == None or result[1] == None:
+		if result == None or result[0] == 10000000 or result[0] <= -999 or result[0] == None or result[1] == None\
+			or type(result[0]) is tuple or type(result[1]) is tuple or type(result) is tuple:
 			return None
 		return [result[1], result[2]]	#Return movement results
 		
