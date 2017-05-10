@@ -50,12 +50,14 @@ class ProjectTBD:
 		board = self.GUI.genSimpleBoard()
 		#print(self.heuristicOfBoard(board))
 		possibleMoves = self.genMoves(board, self.color)	#Select a random starting move, in case something goes wrong with minimax
-		if possibleMoves != []:
+		self.chosenPiece, self.chosenMove = possibleMoves.popitem()
+		self.chosenMove = self.chosenMove[0]
+		"""if possibleMoves != []:
 			self.chosenPair = random.choice(list(possibleMoves.items()))
 			if self.chosenPair != [] and self.chosenPair[1] != []:
 				self.chosenPiece = self.chosenPair[0]
 				self.chosenMove = random.choice(list(self.chosenPair[1]))
-			
+			"""	
 		while(True):
 			if time.time() - self.start > self.time - .2:	#Once time has run out, make the selected move
 				print("Time's up!")
@@ -80,6 +82,8 @@ class ProjectTBD:
 	def makeMove(self):	#Makes the final move decided by the computer
 		#print(self.chosenPiece[0])
 		#print("%d, %d" % (self.chosenMove[0], self.chosenMove[1]))
+		if type(self.chosenPiece[0]) is tuple:
+			print("Error!")
 		self.GUI.selectedPiece = self.GUI.board[self.GUI.coordToIndice(self.chosenPiece)]
 		self.GUI.moveSelectedPiece(self.GUI.board[self.GUI.coordToIndice(self.chosenMove)])
 		
@@ -96,8 +100,7 @@ class ProjectTBD:
 		self.boardStatesEvaluated += 1
 		result = self.alphaBeta(board, 0, alpha, beta, True, heuristicScore)	#Give maximum the current board, set current ply to 0
 		
-		if result == None or result[0] == 10000000 or result[0] <= -999 or result[0] == None or result[1] == None\
-			or type(result[0]) is tuple or type(result[1]) is tuple or type(result) is tuple:
+		if result == None or result[0] == 10000000 or result[0] <= -999 or result[0] == None or result[1] == None:
 			return None
 		return [result[1], result[2]]	#Return movement results
 		
