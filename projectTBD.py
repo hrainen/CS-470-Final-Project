@@ -51,7 +51,9 @@ class ProjectTBD:
 		#print(self.heuristicOfBoard(board))
 		possibleMoves = self.genMoves(board, self.color)	#Select a random starting move, in case something goes wrong with minimax
 		self.chosenPiece, self.chosenMove = possibleMoves.popitem()
-		self.chosenMove = self.chosenMove[0]
+		while self.chosenMove == []:
+			self.chosenPiece, self.chosenMove = possibleMoves.popitem()
+			self.chosenMove = self.chosenMove[0]
 		"""if possibleMoves != []:
 			self.chosenPair = random.choice(list(possibleMoves.items()))
 			if self.chosenPair != [] and self.chosenPair[1] != []:
@@ -355,7 +357,7 @@ class ProjectTBD:
 						# if there is a piece before the jump
 						if board[newAdjCoord[0] + newAdjCoord[1]*self.GUI.dim] != ' ':
 							# and the spot we want to jump to is not occupied by a piece, add to valid moves
-							if board[jumpCoord[0] + jumpCoord[1] * self.GUI.dim] == " ":
+							if board[jumpCoord[0] + jumpCoord[1] * self.GUI.dim] == ' ':
 								valJumps.append(jumpCoord)
 								newSeen.append(jumpCoord)
 
