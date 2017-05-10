@@ -57,7 +57,7 @@ class ProjectTBD:
 				self.chosenMove = random.choice(list(self.chosenPair[1]))
 			
 		while(True):
-			if time.time() - self.start > self.time - 1:	#Once time has run out, make the selected move
+			if time.time() - self.start > self.time - .2:	#Once time has run out, make the selected move
 				print("Time's up!")
 				print("Stopped at %f seconds" % (time.time() - self.start))
 				print("\n~~~~~~~~~~~~~~~~~~~~~~\n")
@@ -117,7 +117,7 @@ class ProjectTBD:
 				return 1000
 			return heuristicScore
 		
-		if time.time() - self.start > self.time - 1:
+		if time.time() - self.start > self.time - .2:
 			if depth == 0 and maximizingPlayer:	#If time has run out, pass the 10000000 flag up the tree
 				return [10000000, None, None]
 			return 10000000
